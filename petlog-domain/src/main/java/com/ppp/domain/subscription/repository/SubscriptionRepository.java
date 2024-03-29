@@ -2,6 +2,7 @@ package com.ppp.domain.subscription.repository;
 
 import com.ppp.domain.pet.Pet;
 import com.ppp.domain.subscription.Subscription;
+import com.ppp.domain.subscription.constant.Status;
 import com.ppp.domain.user.User;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -21,7 +22,9 @@ public interface SubscriptionRepository extends JpaRepository<Subscription, Long
     List<Subscription> findByPetId(Long petId);
 
     @Query("select s.pet.id from Subscription s where s.subscriber.id = ?1 and s.status != 'BLOCK'")
-    Set<Long> findByValidSubscribedPetId(String subscriberId);
+    Set<Long> findByValidSubscribedPetId(String userId);
 
     List<Subscription> findBySubscriberId(String userId);
+
+    Optional<Subscription> findBySubscriberIdAndPetId(String userId, Long petId);
 }

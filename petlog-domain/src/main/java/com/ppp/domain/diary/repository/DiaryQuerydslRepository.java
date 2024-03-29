@@ -2,7 +2,6 @@ package com.ppp.domain.diary.repository;
 
 import com.ppp.domain.diary.dto.DiaryMediaDto;
 import com.ppp.domain.diary.dto.PetDiaryDto;
-import com.ppp.domain.diary.dto.SubscribedPetDiariesDto;
 import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
@@ -45,7 +44,7 @@ public class DiaryQuerydslRepository {
     }
 
     public List<PetDiaryDto> findSubscribedPetsDiariesBySubscription(Set<Long> subscribedPetIds, Pageable pageable) {
-        List<PetDiaryDto> contents = jpaQueryFactory
+        return jpaQueryFactory
                 .from(diary)
                 .leftJoin(diary.diaryMedias, diaryMedia)
                 .leftJoin(petImage).on(petImage.pet.id.eq(diary.pet.id))
@@ -53,7 +52,7 @@ public class DiaryQuerydslRepository {
                         diary.isPublic.eq(true),
                         diary.isDeleted.eq(false))
                 .offset(pageable.getOffset())
-                .limit(pageable.getPageSize() + 1)
+                .limit(pageable.getPageSize())
                 .orderBy(diary.createdAt.desc())
                 .fetchJoin()
                 .transform(
@@ -63,9 +62,6 @@ public class DiaryQuerydslRepository {
                                         set(constructor(DiaryMediaDto.class, diaryMedia.id, diaryMedia.type, diaryMedia.path)),
                                         petImage.url, diary.content, diary.title, diary.createdAt))
                 );
-
-        SubscribedPetDiariesDto.of(contents, hasNext(contents, pageable.getPageSize()));
-        return contents;
     }
 
     public boolean hasNext(List<PetDiaryDto> contents, int pageSize) {

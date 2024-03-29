@@ -5,6 +5,7 @@ import com.ppp.api.subscription.dto.response.SubscriberResponse;
 import com.ppp.api.subscription.dto.transfer.SubscriptionInfoDto;
 import com.ppp.api.subscription.exception.ErrorCode;
 import com.ppp.api.subscription.exception.SubscriptionException;
+import com.ppp.common.service.CacheManageService;
 import com.ppp.domain.pet.Pet;
 import com.ppp.domain.pet.dto.PetDto;
 import com.ppp.domain.pet.repository.PetQuerydslRepository;
@@ -41,7 +42,8 @@ class SubscriptionServiceTest {
     private PetQuerydslRepository petQuerydslRepository;
     @Mock
     private ApplicationEventPublisher applicationEventPublisher;
-
+    @Mock
+    private CacheManageService cacheManageService;
     @InjectMocks
     private SubscriptionService subscriptionService;
 
@@ -179,5 +181,69 @@ class SubscriptionServiceTest {
         assertEquals(response.subscribedPetIds().size(), 1);
         assertTrue(response.subscribedPetIds().contains(1L));
         assertTrue(response.blockedPetIds().contains(2L));
+    }
+
+    @Test
+    @DisplayName("구독자 차단 성공")
+    void blockOrUnblockSubscriber_success_block() {
+        //given
+        given(petRepository.existsByIdAndUserIdAndIsDeletedFalse(anyLong(), anyString()))
+                .willReturn(true);
+        Subscription subscription = Subscription.builder()
+                .status(Status.ACTIVE)
+                .subscriber(user)
+                .pet(pet).build();
+        given(subscriptionRepository.findBySubscriberIdAndPetId(anyString(), anyLong()))
+                .willReturn(Optional.of(subscription));
+        //when
+        subscriptionService.blockOrUnblockSubscriber(1L, "abcd1234", user);
+        //then
+        assertTrue(subscription.isBlocked());
+        verify(cacheManageService, times(1)).deleteCachedSubscriptionInfo(anyString());
+    }
+
+    @Test
+    @DisplayName("구독자 차단 성공-차단 해제")
+    void blockOrUnblockSubscriber_success_unblock() {
+        //given
+        given(petRepository.existsByIdAndUserIdAndIsDeletedFalse(anyLong(), anyString()))
+                .willReturn(true);
+        Subscription subscription = Subscription.builder()
+                .status(Status.BLOCK)
+                .subscriber(user)
+                .pet(pet).build();
+        given(subscriptionRepository.findBySubscriberIdAndPetId(anyString(), anyLong()))
+                .willReturn(Optional.of(subscription));
+        //when
+        subscriptionService.blockOrUnblockSubscriber(1L, "abcd1234", user);
+        //then
+        assertFalse(subscription.isBlocked());
+        verify(cacheManageService, times(1)).deleteCachedSubscriptionInfo(anyString());
+    }
+
+    @Test
+    @DisplayName("구독자 차단 실패-FORBIDDEN_PET_SPACE")
+    void blockOrUnblockSubscriber_fail_FORBIDDEN_PET_SPACE() {
+        //given
+        given(petRepository.existsByIdAndUserIdAndIsDeletedFalse(anyLong(), anyString()))
+                .willReturn(false);
+        //when
+        SubscriptionException exception = assertThrows(SubscriptionException.class, () -> subscriptionService.blockOrUnblockSubscriber(1L, "abcd1234", user));
+        //then
+        assertEquals(ErrorCode.FORBIDDEN_PET_SPACE.getCode(), exception.getCode());
+    }
+
+    @Test
+    @DisplayName("구독자 차단 실패-SUBSCRIBER_NOT_FOUND")
+    void blockOrUnblockSubscriber_fail_SUBSCRIBER_NOT_FOUND() {
+        //given
+        given(petRepository.existsByIdAndUserIdAndIsDeletedFalse(anyLong(), anyString()))
+                .willReturn(true);
+        given(subscriptionRepository.findBySubscriberIdAndPetId(anyString(), anyLong()))
+                .willReturn(Optional.empty());
+        //when
+        SubscriptionException exception = assertThrows(SubscriptionException.class, () -> subscriptionService.blockOrUnblockSubscriber(1L, "abcd1234", user));
+        //then
+        assertEquals(ErrorCode.SUBSCRIBER_NOT_FOUND.getCode(), exception.getCode());
     }
 }

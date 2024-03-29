@@ -35,6 +35,21 @@ public record DiaryFeedResponse(
                 .build();
     }
 
+    public static DiaryFeedResponse from(PetDiaryDto dto, int commentCount, boolean isCurrentUserLiked, int likeCount) {
+        return DiaryFeedResponse.builder()
+                .diaryId(dto.getDiaryId())
+                .title(dto.getTitle())
+                .content(dto.getContent())
+                .createdAt(TimeUtil.calculateTerm(dto.getCreatedAt()))
+                .medias(dto.getDiaryMedias().stream().map(DiaryMediaResponse::from)
+                        .collect(Collectors.toList()))
+                .commentCount(commentCount)
+                .likeCount(likeCount)
+                .isCurrentUserLiked(isCurrentUserLiked)
+                .pet(Pet.of(dto.getPetId(), dto.getPetName(), dto.getPetProfilePath(), true))
+                .build();
+    }
+
     @Builder
     public record Pet(
             String name,

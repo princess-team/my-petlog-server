@@ -7,6 +7,7 @@ import com.ppp.api.subscription.dto.response.SubscribedPetResponse;
 import com.ppp.api.subscription.dto.response.SubscriberResponse;
 import com.ppp.api.subscription.dto.transfer.SubscriptionInfoDto;
 import com.ppp.api.subscription.exception.SubscriptionException;
+import com.ppp.common.service.CacheManageService;
 import com.ppp.domain.notification.constant.MessageCode;
 import com.ppp.domain.pet.Pet;
 import com.ppp.domain.pet.repository.PetQuerydslRepository;
@@ -26,6 +27,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import static com.ppp.api.subscription.exception.ErrorCode.FORBIDDEN_PET_SPACE;
+import static com.ppp.api.subscription.exception.ErrorCode.SUBSCRIBER_NOT_FOUND;
 
 @Service
 @RequiredArgsConstructor
@@ -34,6 +36,7 @@ public class SubscriptionService {
     private final PetRepository petRepository;
     private final PetQuerydslRepository petQuerydslRepository;
     private final ApplicationEventPublisher applicationEventPublisher;
+    private final CacheManageService cacheManageService;
 
     @Transactional
     public void subscribeOrUnsubscribe(Long petId, User user) {
@@ -78,5 +81,19 @@ public class SubscriptionService {
         Map<Boolean, List<Subscription>> subscriptionMap = subscriptionRepository.findBySubscriberId(userId)
                 .stream().collect(Collectors.partitioningBy(Subscription::isBlocked));
         return SubscriptionInfoDto.of(subscriptionMap.get(false), subscriptionMap.get(true));
+    }
+
+    @Transactional
+    public void blockOrUnblockSubscriber(Long petId, String subscriberId, User user) {
+        validateManagePetsSubscribers(petId, user.getId());
+
+        Subscription subscription = subscriptionRepository.findBySubscriberIdAndPetId(subscriberId, petId)
+                .orElseThrow(() -> new SubscriptionException(SUBSCRIBER_NOT_FOUND));
+        subscription.switchBlockStatus();
+        deleteCachedSubscriptionInfo(subscriberId);
+    }
+
+    private void deleteCachedSubscriptionInfo(String userId) {
+        cacheManageService.deleteCachedSubscriptionInfo(userId);
     }
 }

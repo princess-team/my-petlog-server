@@ -1,7 +1,6 @@
 package com.ppp.api.subscription.dto.response;
 
 import com.ppp.domain.subscription.Subscription;
-import com.ppp.domain.user.User;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 
@@ -13,17 +12,15 @@ public record SubscriberResponse(
         @Schema(description = "구독자 유저 닉네임")
         String nickname,
         @Schema(description = "구독자 유저 프로필")
-        String profilePath
+        String profilePath,
+        boolean isBlocked
 ) {
     public static SubscriberResponse from(Subscription subscription) {
-        return SubscriberResponse.from(subscription.getSubscriber());
-    }
-
-    private static SubscriberResponse from(User user) {
         return SubscriberResponse.builder()
-                .id(user.getId())
-                .nickname(user.getNickname())
-                .profilePath(user.getProfilePath())
+                .isBlocked(subscription.isBlocked())
+                .id(subscription.getSubscriber().getId())
+                .nickname(subscription.getSubscriber().getNickname())
+                .profilePath(subscription.getSubscriber().getProfilePath())
                 .build();
     }
 }

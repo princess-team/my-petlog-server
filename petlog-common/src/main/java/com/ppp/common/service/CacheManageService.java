@@ -13,4 +13,9 @@ public class CacheManageService {
     public void deleteCachedPetSpaceAuthority(String userId, Long petId) {
         log.info("Class : {}, Method : {}, CacheKey : {}", this.getClass(), "deleteCachedPetSpaceAuthority", userId + "," + petId);
     }
+
+    @CacheEvict(value = "subscriptionInfo", key = "#a0")
+    public void deleteCachedSubscriptionInfo(String userId) {
+        log.info("Class : {}, Method : {}, CacheKey : {}", this.getClass(), "deleteCachedPetSpaceAuthority", userId);
+    }
 }
