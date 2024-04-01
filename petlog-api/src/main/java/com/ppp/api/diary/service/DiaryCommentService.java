@@ -60,7 +60,7 @@ public class DiaryCommentService {
                 .user(user)
                 .build());
         applicationEventPublisher.publishEvent(new DiaryCommentCreatedEvent(savedComment));
-        applicationEventPublisher.publishEvent(new DiaryNotificationEvent(MessageCode.DIARY_COMMENT_CREATE, user, diary));
+        if (!user.getId().equals(diary.getUser().getId())) applicationEventPublisher.publishEvent(new DiaryNotificationEvent(MessageCode.DIARY_COMMENT_CREATE, user, diary));
         if (request.getTaggedUserIds() != null && !request.getTaggedUserIds().isEmpty()) applicationEventPublisher.publishEvent(new DiaryTagNotificationEvent(MessageCode.DIARY_TAG, user, diary, request.getTaggedUserIds()));
 
         return DiaryCommentResponse.from(savedComment, user.getId());
