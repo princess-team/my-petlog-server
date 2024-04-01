@@ -12,6 +12,7 @@ public enum Domain {
     DIARY_COMMENT(false),
     DIARY_RE_COMMENT(false),
     DIARY_COMMENT_LIKE(false),
+    DIARY_DRAFT(true),
     PET(false);
     private final boolean hasVideo;
 }

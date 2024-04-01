@@ -1,5 +1,7 @@
 package com.ppp;
 
+import com.ppp.api.auth.service.EmailService;
+import com.ppp.api.config.EmailConfig;
 import com.ppp.common.client.FfmpegClient;
 import com.ppp.common.config.FfmpegConfig;
 import com.ppp.common.config.JasyptConfig;
@@ -18,6 +20,12 @@ class ApiApplicationTests {
 
     @MockBean
     private FfmpegClient ffmpegClient;
+
+    @MockBean
+    private EmailConfig emailConfig;
+
+    @MockBean
+    private EmailService emailService;
 
     @Test
     void contextLoads() {
