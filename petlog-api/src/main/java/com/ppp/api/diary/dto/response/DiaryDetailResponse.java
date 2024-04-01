@@ -28,6 +28,8 @@ public record DiaryDetailResponse(
         List<DiaryMediaResponse> images,
         @ArraySchema(schema = @Schema(implementation = DiaryMediaResponse.class))
         List<DiaryMediaResponse> videos,
+        @Schema(description = "전체 공개 일기인지 여부")
+        boolean isPublic,
         @Schema(description = "유저가 좋아요를 누른 글인지 여부")
         boolean isCurrentUserLiked,
         @Schema(description = "글쓴이에 대한 정보")
@@ -45,6 +47,7 @@ public record DiaryDetailResponse(
                 .title(diary.getTitle())
                 .content(diary.getContent())
                 .commentCount(commentCount)
+                .isPublic(diary.isPublic())
                 .images(diary.getImageMedias().stream()
                         .map(DiaryMediaResponse::from)
                         .collect(Collectors.toList()))
