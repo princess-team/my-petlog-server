@@ -20,7 +20,7 @@ public class EmailService {
 
 
     public int createNumber() {
-        return (int)(Math.random() * (90000)) + 100000;
+        return (int)(Math.random() * (900000)) + 100000;
     }
 
     public MimeMessage createEmailForm(String mail, int number){

@@ -52,8 +52,7 @@ public class SubscriptionService {
                                     .status(Status.ACTIVE)
                                     .pet(pet)
                                     .build());
-                            applicationEventPublisher.publishEvent(
-                                    new SubscribeNotificationEvent(MessageCode.SUBSCRIBE, user, pet.getUser().getId(), pet.getName()));
+                            applicationEventPublisher.publishEvent(new SubscribeNotificationEvent(MessageCode.SUBSCRIBE, user, pet.getUser().getId(), pet));
                         });
     }
 

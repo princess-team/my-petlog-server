@@ -209,13 +209,13 @@ public class DiaryService {
     public void likeDiary(User user, Long petId, Long diaryId) {
         validateLikeDiary(user, petId, diaryId);
 
-        if (diaryRedisService.isLikeExistByDiaryIdAndUserId(diaryId, user.getId()))
+        if (diaryRedisService.isLikeExistByDiaryIdAndUserId(diaryId, user.getId())) {
             diaryRedisService.cancelLikeByDiaryIdAndUserId(diaryId, user.getId());
-        else {
+        } else {
             diaryRedisService.registerLikeByDiaryIdAndUserId(diaryId, user.getId());
-            diaryRepository.findByIdAndIsDeletedFalse(diaryId).ifPresent(diary ->
-                    applicationEventPublisher.publishEvent(new DiaryNotificationEvent(MessageCode.DIARY_LIKE, user, diary))
-            );
+            diaryRepository.findByIdAndIsDeletedFalse(diaryId).ifPresent(diary -> {
+                if (!user.getId().equals(diary.getUser().getId())) applicationEventPublisher.publishEvent(new DiaryNotificationEvent(MessageCode.DIARY_LIKE, user, diary));
+            });
         }
     }
 

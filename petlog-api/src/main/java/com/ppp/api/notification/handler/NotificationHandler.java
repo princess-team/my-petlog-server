@@ -11,6 +11,8 @@ import com.ppp.domain.notification.constant.Type;
 import com.ppp.domain.pet.Pet;
 import com.ppp.domain.pet.PetImage;
 import com.ppp.domain.pet.repository.PetImageRepository;
+import com.ppp.domain.subscription.SubscriptionLog;
+import com.ppp.domain.subscription.repository.SubscriptionLogRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
@@ -25,6 +27,7 @@ public class NotificationHandler {
     private final NotificationService notificationService;
     private final PetImageRepository petImageRepository;
     private final DiaryLikeRepository diaryLikeRepository;
+    private final SubscriptionLogRepository subscriptionLogRepository;
 
     private String findThumbnailPath(Pet pet) {
         PetImage petImage = petImageRepository.findByPet(pet).orElse(null);
@@ -82,10 +85,13 @@ public class NotificationHandler {
         String message = "";
         switch (event.getMessageCode()) {
             case SUBSCRIBE:
-                message = String.format("%s님이 %s의 일기를 구독하기 시작했습니다.", event.getActor().getNickname(), event.getPetName());
+                message = String.format("%s님이 %s의 일기를 구독하기 시작했습니다.", event.getActor().getNickname(), event.getPet().getName());
+                if (!subscriptionLogRepository.existsByPetIdAndUserId(event.getPet().getId(), event.getActor().getId())) {
+                    notificationService.createNotification(Type.SUBSCRIBE, event.getActor().getId(), event.getReceiverId(), event.getActor().getThumbnailPath(), message);
+                    subscriptionLogRepository.save(new SubscriptionLog(event.getPet().getId(), event.getActor().getId()));
+                }
                 break;
         }
-        notificationService.createNotification(Type.SUBSCRIBE, event.getActor().getId(), event.getReceiverId(), event.getActor().getThumbnailPath(), message);
     }
 
     @Async
