@@ -6,5 +6,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface SubscriptionLogRepository extends JpaRepository<SubscriptionLog, Long> {
-    boolean existsByPetIdAndUserId(Long id, String id1);
+    boolean existsByPetIdAndUserId(Long id, String userId);
 }
