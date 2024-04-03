@@ -14,6 +14,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -42,6 +43,17 @@ class DiaryLikeControllerTest {
     @DisplayName("일기 좋아요 성공")
     void likeDiary_success() throws Exception {
         mockMvc.perform(post("/api/v1/pets/{petId}/diaries/{diaryId}/like", 1L, 1L)
+                        .header("Authorization", TOKEN)
+                        .contentType(MediaType.APPLICATION_JSON)
+                ).andDo(print())
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockCustomUser
+    @DisplayName("일기 좋아요 유저 조회 성공")
+    void retrieveDiaryLikeUsers_success() throws Exception {
+        mockMvc.perform(get("/api/v1/pets/diaries/{diaryId}/like", 1L, 1L)
                         .header("Authorization", TOKEN)
                         .contentType(MediaType.APPLICATION_JSON)
                 ).andDo(print())

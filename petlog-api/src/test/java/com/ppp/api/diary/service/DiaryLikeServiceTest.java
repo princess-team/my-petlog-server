@@ -1,10 +1,12 @@
 package com.ppp.api.diary.service;
 
 import com.ppp.api.diary.exception.DiaryException;
+import com.ppp.api.user.dto.response.UserResponse;
 import com.ppp.domain.diary.Diary;
 import com.ppp.domain.diary.repository.DiaryRepository;
 import com.ppp.domain.pet.Pet;
 import com.ppp.domain.user.User;
+import com.ppp.domain.user.repository.UserRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -15,13 +17,13 @@ import org.springframework.context.ApplicationEventPublisher;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import static com.ppp.api.diary.exception.ErrorCode.DIARY_NOT_FOUND;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.anyString;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -34,6 +36,8 @@ class DiaryLikeServiceTest {
     private ApplicationEventPublisher applicationEventPublisher;
     @Mock
     private DiaryRedisService diaryRedisService;
+    @Mock
+    private UserRepository userRepository;
     @InjectMocks
     private DiaryLikeService diaryLikeService;
 
@@ -101,4 +105,41 @@ class DiaryLikeServiceTest {
         //then
         assertEquals(DIARY_NOT_FOUND.getCode(), exception.getCode());
     }
+
+    @Test
+    @DisplayName("다이어리 좋아요 조회 성공")
+    void retrieveDiaryLikeUsers_success() {
+        //given
+        given(diaryRepository.existsByIdAndIsDeletedFalse(anyLong()))
+                .willReturn(true);
+        given(diaryRedisService.getLikedUserIdsByDiaryId(anyLong()))
+                .willReturn(Set.of("abcd", "defed"));
+        given(userRepository.findByIdIn(anySet()))
+                .willReturn(List.of(user, userA));
+        //when
+        List<UserResponse> responses = diaryLikeService.retrieveDiaryLikeUsers(user, 1L);
+        //then
+        assertEquals("randomstring",responses.get(0).id());
+        assertEquals("hi", responses.get(0).nickname());
+        assertEquals("USER/12345678/1232132313dsfadskfakfsa.jpg", responses.get(0).profilePath());
+        assertTrue(responses.get(0).isCurrentUser());
+        assertEquals("cherrymommy",responses.get(1).id());
+        assertEquals("체리엄마", responses.get(1).nickname());
+        assertEquals("USER/12345678/1232132313dsfadskfakfsa.jpg", responses.get(1).profilePath());
+        assertFalse(responses.get(1).isCurrentUser());
+    }
+
+    @Test
+    @DisplayName("다이어리 좋아요 조회 실패-DIARY_NOT_FOUND")
+    void retrieveDiaryLikeUsers_fail_DIARY_NOT_FOUND() {
+        //given
+        given(diaryRepository.existsByIdAndIsDeletedFalse(anyLong()))
+                .willReturn(false);
+        //when
+        DiaryException exception = assertThrows(DiaryException.class, () -> diaryLikeService.retrieveDiaryLikeUsers(user, 1L));
+        //then
+        assertEquals(DIARY_NOT_FOUND.getCode(), exception.getCode());
+    }
+
+
 }
