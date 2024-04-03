@@ -117,18 +117,4 @@ public class DiaryController {
                                                                            @AuthenticationPrincipal PrincipalDetails principalDetails) {
         return ResponseEntity.ok(diaryService.displayDiaries(principalDetails.getUser(), petId, page, size));
     }
-
-    @Operation(summary = "일기 좋아요")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", content = {@Content(schema = @Schema())}),
-            @ApiResponse(responseCode = "403", description = "기록 공간에 대한 권한 없음", content = {@Content(schema = @Schema(implementation = ExceptionResponse.class))}),
-            @ApiResponse(responseCode = "404", description = "일치하는 일기 없음", content = {@Content(schema = @Schema(implementation = ExceptionResponse.class))})
-    })
-    @PostMapping(value = "/{diaryId}/like")
-    private ResponseEntity<Void> likeDiary(@PathVariable Long petId,
-                                           @PathVariable Long diaryId,
-                                           @AuthenticationPrincipal PrincipalDetails principalDetails) {
-        diaryService.likeDiary(principalDetails.getUser(), petId, diaryId);
-        return ResponseEntity.ok().build();
-    }
 }

@@ -60,10 +60,16 @@ public class DiaryCommentService {
                 .user(user)
                 .build());
         applicationEventPublisher.publishEvent(new DiaryCommentCreatedEvent(savedComment));
-        if (!user.getId().equals(diary.getUser().getId())) applicationEventPublisher.publishEvent(new DiaryNotificationEvent(MessageCode.DIARY_COMMENT_CREATE, user, diary));
-        if (request.getTaggedUserIds() != null && !request.getTaggedUserIds().isEmpty()) applicationEventPublisher.publishEvent(new DiaryTagNotificationEvent(MessageCode.DIARY_TAG, user, diary, request.getTaggedUserIds()));
-
+        notifyDiaryComment(diary, user, request.getTaggedUserIds());
         return DiaryCommentResponse.from(savedComment, user.getId());
+    }
+
+    private void notifyDiaryComment(Diary diary, User sender, List<String> taggedUserIds) {
+        if (!sender.getId().equals(diary.getUser().getId()))
+            applicationEventPublisher.publishEvent(new DiaryNotificationEvent(MessageCode.DIARY_COMMENT_CREATE, sender, diary));
+        if (taggedUserIds != null && !taggedUserIds.isEmpty())
+            applicationEventPublisher.publishEvent(new DiaryTagNotificationEvent(MessageCode.DIARY_TAG, sender, diary, taggedUserIds));
+
     }
 
     private Map<String, String> getTaggedUsersIdNicknameMap(Long petId, List<String> taggedUsers) {

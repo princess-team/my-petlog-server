@@ -205,26 +205,6 @@ public class DiaryService {
         return new SliceImpl<>(content, diarySlice.getPageable(), diarySlice.hasNext());
     }
 
-    @Transactional
-    public void likeDiary(User user, Long petId, Long diaryId) {
-        validateLikeDiary(user, petId, diaryId);
-
-        if (diaryRedisService.isLikeExistByDiaryIdAndUserId(diaryId, user.getId())) {
-            diaryRedisService.cancelLikeByDiaryIdAndUserId(diaryId, user.getId());
-        } else {
-            diaryRedisService.registerLikeByDiaryIdAndUserId(diaryId, user.getId());
-            diaryRepository.findByIdAndIsDeletedFalse(diaryId).ifPresent(diary -> {
-                if (!user.getId().equals(diary.getUser().getId())) applicationEventPublisher.publishEvent(new DiaryNotificationEvent(MessageCode.DIARY_LIKE, user, diary));
-            });
-        }
-    }
-
-    private void validateLikeDiary(User user, Long petId, Long diaryId) {
-        if (!diaryRepository.existsByIdAndIsDeletedFalse(diaryId))
-            throw new DiaryException(DIARY_NOT_FOUND);
-        validateAccessDiary(petId, user);
-    }
-
     private void validateAccessDiary(Long petId, User user) {
         if (!guardianRepository.existsByUserIdAndPetId(user.getId(), petId))
             throw new DiaryException(FORBIDDEN_PET_SPACE);
