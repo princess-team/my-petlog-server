@@ -8,6 +8,8 @@ import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
+import java.util.Set;
+
 @Service
 @RequiredArgsConstructor
 public class DiaryRedisService {
@@ -46,5 +48,9 @@ public class DiaryRedisService {
     @CacheEvict(value = "diaryLikeCount")
     public void deleteAllLikeByDiaryId(Long diaryId) {
         redisClient.removeKeyToSet(Domain.DIARY_LIKE, diaryId);
+    }
+
+    public Set<String> getLikedUserIdsByDiaryId(Long diaryId){
+        return redisClient.getSet(Domain.DIARY_LIKE, diaryId);
     }
 }

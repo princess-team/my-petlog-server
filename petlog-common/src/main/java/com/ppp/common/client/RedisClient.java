@@ -7,6 +7,7 @@ import org.springframework.stereotype.Component;
 
 import java.time.Duration;
 import java.util.Optional;
+import java.util.Set;
 
 @Component
 @RequiredArgsConstructor
@@ -82,6 +83,10 @@ public class RedisClient {
 
     public void removeValueToSet(Domain domain, Long key, String value) {
         redisTemplate.opsForSet().remove(domain.name() + key, value);
+    }
+
+    public Set<String> getSet(Domain domain, Long key) {
+        return redisTemplate.opsForSet().members(domain.name() + key);
     }
 
     public boolean isValueExistInSet(Domain domain, Long key, String value) {

@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 public interface UserRepository extends JpaRepository<User, String> {
     Optional<User> findByEmail(String email);
@@ -21,4 +22,6 @@ public interface UserRepository extends JpaRepository<User, String> {
 
     @Query("select u from User u left join Guardian g on u.id = g.user.id where g.pet.id = ?1 and u.id in ?2 and u.isDeleted = false")
     List<User> findByGuardianUsersByPetIdAndUserIdsContaining(Long petId, List<String> userIds);
+
+    List<User> findByIdIn(Set<String> userIds);
 }
