@@ -3,6 +3,7 @@ package com.ppp.api.diary.service;
 import com.ppp.api.diary.dto.response.DiaryFeedResponse;
 import com.ppp.api.subscription.dto.transfer.SubscriptionInfoDto;
 import com.ppp.api.subscription.service.SubscriptionService;
+import com.ppp.common.security.PrincipalDetails;
 import com.ppp.common.util.TimeUtil;
 import com.ppp.domain.diary.dto.PetDiaryDto;
 import com.ppp.domain.diary.repository.DiaryQuerydslRepository;
@@ -18,10 +19,7 @@ import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -87,7 +85,7 @@ class DiaryFeedServiceTest {
                         new PetDiaryDto(5L, 3L, "마루", new HashSet<>(), "/PET/profilepath", "나 사람됐다 짱이지", "마루는 네살", LocalDateTime.MIN)
                 ));
         //when
-        Set<DiaryFeedResponse> responses = diaryFeedService.retrieveDiaryFeed(userA, 0, 10);
+        Set<DiaryFeedResponse> responses = diaryFeedService.retrieveDiaryFeed(Optional.of(new PrincipalDetails(userA)), 0, 10);
         //then
         DiaryFeedResponse element = (DiaryFeedResponse) responses.toArray()[0];
         assertEquals(responses.size(), 2);
