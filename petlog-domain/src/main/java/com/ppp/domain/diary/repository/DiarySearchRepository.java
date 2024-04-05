@@ -8,11 +8,12 @@ import org.springframework.data.elasticsearch.repository.ElasticsearchRepository
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Set;
 
 @Repository
 public interface DiarySearchRepository extends ElasticsearchRepository<DiaryDocument, String> {
-    @Query("{\"bool\" : { \"must\" : [ { \"bool\" : { \"should\" : [ {\"wildcard\" : { \"title\" : { \"value\" : \"*?0*\"}}}, {\"match_phrase\" : { \"content\" : { \"query\" : \"?0\", \"slop\" : 1}}}] } } ], \"filter\": [ {\"term\": {\"petId\": ?1}} ] }}")
-    Page<DiaryDocument> findByTitleContainsOrContentContainsAndPetIdOrderByDateDesc(String keyword, Long petId, PageRequest request);
+    @Query("{\"bool\" : { \"must\" : [ { \"bool\" : { \"should\" : [ {\"wildcard\" : { \"title\" : { \"value\" : \"*?0*\"}}}, {\"match_phrase\" : { \"content\" : { \"query\" : \"?0\", \"slop\" : 1}}}] } } ], \"filter\": [ {\"term\": {\"petId\": ?1}}, {\"terms\": {\"isPublic\": ?2}} ] }}")
+    Page<DiaryDocument> findByTitleContainsOrContentContainsAndPetIdOrderByDateDesc(String keyword, Long petId, Set<Boolean> isPublicFilter, PageRequest request);
 
     List<DiaryDocument> findByUser_Id(String userId);
 }

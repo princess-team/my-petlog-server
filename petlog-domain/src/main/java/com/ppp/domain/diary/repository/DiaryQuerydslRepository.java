@@ -23,6 +23,25 @@ import static com.querydsl.core.types.Projections.constructor;
 public class DiaryQuerydslRepository {
     private final JPAQueryFactory jpaQueryFactory;
 
+    public List<PetDiaryDto> findRandomPetsDiaries(Pageable pageable) {
+        return jpaQueryFactory.from(diary)
+                .leftJoin(diary.diaryMedias, diaryMedia)
+                .leftJoin(petImage).on(petImage.pet.id.eq(diary.pet.id))
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .where(diary.isPublic.eq(true),
+                        diary.isDeleted.eq(false))
+                .orderBy(Expressions.numberTemplate(Double.class, "function('rand')").asc())
+                .fetchJoin()
+                .transform(
+                        groupBy(diary.id)
+                                .list(constructor(PetDiaryDto.class,
+                                        diary.id, diary.pet.id, diary.pet.name,
+                                        set(constructor(DiaryMediaDto.class, diaryMedia.id, diaryMedia.type, diaryMedia.path)),
+                                        petImage.url, diary.content, diary.title, diary.createdAt))
+                );
+    }
+
     public List<PetDiaryDto> findRandomPetsDiaries(Set<Long> blockedPetIds, Pageable pageable) {
         return jpaQueryFactory.from(diary)
                 .leftJoin(diary.diaryMedias, diaryMedia)

@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Optional;
 import java.util.Set;
 
 @Tag(name = "Diary Feed", description = "Diary Feed APIs")
@@ -38,6 +39,6 @@ public class DiaryFeedController {
     private ResponseEntity<Set<DiaryFeedResponse>> retrieveDiaryFeed(@RequestParam(defaultValue = "0") int page,
                                                                      @RequestParam(defaultValue = "5") int size,
                                                                      @AuthenticationPrincipal PrincipalDetails principalDetails) {
-        return ResponseEntity.ok(diaryFeedService.retrieveDiaryFeed(principalDetails.getUser(), page, size));
+        return ResponseEntity.ok(diaryFeedService.retrieveDiaryFeed(Optional.ofNullable(principalDetails), page, size));
     }
 }

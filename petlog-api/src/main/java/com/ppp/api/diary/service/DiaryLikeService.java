@@ -5,6 +5,7 @@ import com.ppp.api.notification.dto.event.DiaryNotificationEvent;
 import com.ppp.api.user.dto.response.UserResponse;
 import com.ppp.domain.diary.Diary;
 import com.ppp.domain.diary.repository.DiaryRepository;
+import com.ppp.domain.guardian.repository.GuardianRepository;
 import com.ppp.domain.notification.constant.MessageCode;
 import com.ppp.domain.user.User;
 import com.ppp.domain.user.repository.UserRepository;
@@ -19,6 +20,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import static com.ppp.api.diary.exception.ErrorCode.DIARY_NOT_FOUND;
+import static com.ppp.api.diary.exception.ErrorCode.FORBIDDEN_PET_SPACE;
 
 @Service
 @RequiredArgsConstructor
@@ -27,18 +29,25 @@ public class DiaryLikeService {
     private final DiaryRedisService diaryRedisService;
     private final DiaryRepository diaryRepository;
     private final UserRepository userRepository;
+    private final GuardianRepository guardianRepository;
 
     @Transactional
     public void likeDiary(User user, Long petId, Long diaryId) {
         Diary diary = diaryRepository.findByIdAndIsDeletedFalse(diaryId)
                 .orElseThrow(() -> new DiaryException(DIARY_NOT_FOUND));
-
+        validateAccessDiary(petId, user, diary);
         if (diaryRedisService.isLikeExistByDiaryIdAndUserId(diaryId, user.getId()))
             diaryRedisService.cancelLikeByDiaryIdAndUserId(diaryId, user.getId());
         else {
             diaryRedisService.registerLikeByDiaryIdAndUserId(diaryId, user.getId());
             notifyDiaryLike(user, diary);
         }
+    }
+
+    private void validateAccessDiary(Long petId, User user, Diary diary) {
+        if (diary.isPublic()) return;
+        if (!guardianRepository.existsByUserIdAndPetId(user.getId(), petId))
+            throw new DiaryException(FORBIDDEN_PET_SPACE);
     }
 
     private void notifyDiaryLike(User sender, Diary diary) {
