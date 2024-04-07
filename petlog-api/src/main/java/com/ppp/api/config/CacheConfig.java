@@ -1,6 +1,5 @@
 package com.ppp.api.config;
 
-import org.springframework.boot.autoconfigure.cache.RedisCacheManagerBuilderCustomizer;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
@@ -13,6 +12,8 @@ import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 import java.time.Duration;
+import java.util.HashMap;
+import java.util.Map;
 
 import static com.ppp.domain.common.constant.CacheValue.*;
 
@@ -23,32 +24,41 @@ public class CacheConfig {
     public CacheManager cacheManager(RedisConnectionFactory redisConnectionFactory) {
         return RedisCacheManager.RedisCacheManagerBuilder
                 .fromConnectionFactory(redisConnectionFactory)
-                .cacheDefaults(
-                        RedisCacheConfiguration
-                                .defaultCacheConfig()
-                                .disableCachingNullValues()
-                                .entryTtl(Duration.ofMinutes(60))
-                                .serializeKeysWith(
-                                        RedisSerializationContext.SerializationPair
-                                                .fromSerializer(new StringRedisSerializer()))
-                                .serializeValuesWith(
-                                        RedisSerializationContext.SerializationPair
-                                                .fromSerializer(new GenericJackson2JsonRedisSerializer())))
+                .cacheDefaults(defaultRedisCacheConfiguration()
+                        .entryTtl(Duration.ofMinutes(60)))
+                .withInitialCacheConfigurations(redisCacheConfigurationMap())
                 .build();
     }
 
-    @Bean
-    public RedisCacheManagerBuilderCustomizer redisCacheManagerBuilderCustomizer() {
-        return builder -> builder
-                .withCacheConfiguration(PET_SPACE_AUTHORITY.getValue(),
-                        RedisCacheConfiguration.defaultCacheConfig().entryTtl(Duration.ofMinutes(30)))
-                .withCacheConfiguration(DIARY_COMMENT_COUNT.getValue(),
-                        RedisCacheConfiguration.defaultCacheConfig().entryTtl(Duration.ofMinutes(60)))
-                .withCacheConfiguration(DIARY_COMMENT_LIKE_COUNT.getValue(),
-                        RedisCacheConfiguration.defaultCacheConfig().entryTtl(Duration.ofMinutes(30)))
-                .withCacheConfiguration(DIARY_MOST_USED_TERMS.getValue(),
-                        RedisCacheConfiguration.defaultCacheConfig().entryTtl(Duration.ofMinutes(40)))
-                .withCacheConfiguration(DIARY_COMMENT_RE_COMMENT_COUNT.getValue(),
-                        RedisCacheConfiguration.defaultCacheConfig().entryTtl(Duration.ofMinutes(60)));
+    private RedisCacheConfiguration defaultRedisCacheConfiguration() {
+        return RedisCacheConfiguration
+                .defaultCacheConfig()
+                .disableCachingNullValues()
+                .serializeKeysWith(
+                        RedisSerializationContext.SerializationPair
+                                .fromSerializer(new StringRedisSerializer()))
+                .serializeValuesWith(
+                        RedisSerializationContext.SerializationPair
+                                .fromSerializer(new GenericJackson2JsonRedisSerializer()));
     }
+
+    private Map<String, RedisCacheConfiguration> redisCacheConfigurationMap() {
+        Map<String, RedisCacheConfiguration> cacheConfigurationMap = new HashMap<>();
+        cacheConfigurationMap.put(PET_SPACE_AUTHORITY.getValue(),
+                defaultRedisCacheConfiguration().entryTtl(Duration.ofMinutes(30)));
+        cacheConfigurationMap.put(DIARY_COMMENT_COUNT.getValue(),
+                defaultRedisCacheConfiguration().entryTtl(Duration.ofMinutes(60)));
+        cacheConfigurationMap.put(DIARY_COMMENT_LIKE_COUNT.getValue(),
+                defaultRedisCacheConfiguration().entryTtl(Duration.ofMinutes(30)));
+        cacheConfigurationMap.put(DIARY_MOST_USED_TERMS.getValue(),
+                defaultRedisCacheConfiguration().entryTtl(Duration.ofMinutes(40)));
+        cacheConfigurationMap.put(DIARY_COMMENT_RE_COMMENT_COUNT.getValue(),
+                defaultRedisCacheConfiguration().entryTtl(Duration.ofMinutes(60)));
+        cacheConfigurationMap.put(DIARY_ACCESS_AUTHORITY.getValue(),
+                defaultRedisCacheConfiguration().entryTtl(Duration.ofSeconds(70)));
+        cacheConfigurationMap.put(SUBSCRIPTION_INFO.getValue(),
+                defaultRedisCacheConfiguration().entryTtl(Duration.ofMinutes(5)));
+        return cacheConfigurationMap;
+    }
+
 }

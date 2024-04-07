@@ -7,13 +7,13 @@ import com.ppp.api.diary.dto.request.DiaryCommentRequest;
 import com.ppp.api.diary.dto.response.DiaryCommentResponse;
 import com.ppp.api.diary.dto.response.DiaryReCommentResponse;
 import com.ppp.api.diary.exception.DiaryException;
+import com.ppp.api.diary.validator.DiaryAccessValidator;
 import com.ppp.api.notification.dto.event.DiaryNotificationEvent;
 import com.ppp.api.notification.dto.event.DiaryTagNotificationEvent;
 import com.ppp.domain.diary.Diary;
 import com.ppp.domain.diary.DiaryComment;
 import com.ppp.domain.diary.repository.DiaryCommentRepository;
 import com.ppp.domain.diary.repository.DiaryRepository;
-import com.ppp.domain.guardian.repository.GuardianRepository;
 import com.ppp.domain.notification.constant.MessageCode;
 import com.ppp.domain.user.User;
 import com.ppp.domain.user.repository.UserRepository;
@@ -41,17 +41,17 @@ public class DiaryCommentService {
 
     private final DiaryCommentRepository diaryCommentRepository;
     private final DiaryRepository diaryRepository;
-    private final GuardianRepository guardianRepository;
     private final UserRepository userRepository;
     private final DiaryCommentRedisService diaryCommentRedisService;
     private final ApplicationEventPublisher applicationEventPublisher;
+    private final DiaryAccessValidator diaryAccessValidator;
 
     @Transactional
     public DiaryCommentResponse createComment(User user, Long petId, Long diaryId, DiaryCommentRequest request) {
         Diary diary = diaryRepository.findByIdAndIsDeletedFalse(diaryId)
                 .filter(foundDiary -> Objects.equals(foundDiary.getPet().getId(), petId))
                 .orElseThrow(() -> new DiaryException(DIARY_NOT_FOUND));
-        validateAccessDiary(petId, user, diary);
+        diaryAccessValidator.validateAccessDiary(petId, user.getId(), diary);
 
         DiaryComment savedComment = diaryCommentRepository.save(DiaryComment.builder()
                 .content(request.getContent())
@@ -80,12 +80,6 @@ public class DiaryCommentService {
         return taggedUsersIdNicknameMap;
     }
 
-    private void validateAccessDiary(Long petId, User user, Diary diary) {
-        if (diary.isPublic()) return;
-        if (!guardianRepository.existsByUserIdAndPetId(user.getId(), petId))
-            throw new DiaryException(FORBIDDEN_PET_SPACE);
-    }
-
     @Transactional
     public void updateComment(User user, Long petId, Long commentId, DiaryCommentRequest request) {
         DiaryComment comment = diaryCommentRepository.findByIdAndPetIdAndIsDeletedFalse(commentId, petId)
@@ -98,7 +92,7 @@ public class DiaryCommentService {
     private void validateModifyComment(DiaryComment comment, User user, Long petId) {
         if (!Objects.equals(comment.getUser().getId(), user.getId()))
             throw new DiaryException(NOT_DIARY_COMMENT_OWNER);
-        validateAccessDiary(petId, user, comment.getDiary());
+        diaryAccessValidator.validateAccessDiary(petId, user.getId(), comment.getDiary());
     }
 
     @Transactional
@@ -112,22 +106,25 @@ public class DiaryCommentService {
     }
 
     public Slice<DiaryCommentResponse> displayComments(User user, Long petId, Long diaryId, int page, int size) {
-        Diary diary = diaryRepository.findByIdAndIsDeletedFalse(diaryId)
-                .filter(foundDiary -> Objects.equals(foundDiary.getPet().getId(), petId))
-                .orElseThrow(() -> new DiaryException(DIARY_NOT_FOUND));
-        validateAccessDiary(petId, user, diary);
+        diaryAccessValidator.validateAccessDiary(petId, user.getId(), diaryId);
 
-        return diaryCommentRepository.findByDiaryAndAncestorCommentIdIsNullAndIsDeletedFalse(diary, PageRequest.of(page, size, Sort.by("id").descending()))
-                .map(comment -> DiaryCommentResponse.from(comment, user.getId(),
-                        diaryCommentRedisService.isDiaryCommentLikeExistByCommentIdAndUserId(comment.getId(), user.getId()),
-                        diaryCommentRedisService.getLikeCountByCommentId(comment.getId()),
-                        diaryCommentRedisService.getDiaryReCommentCountByCommentId(comment.getId())));
+        return diaryCommentRepository.findAncestorCommentByDiaryId(diaryId, PageRequest.of(page, size, Sort.by("id").descending()))
+                .map(comment -> toDiaryCommentResponse(comment, user.getId()));
+    }
+
+    private DiaryCommentResponse toDiaryCommentResponse(DiaryComment comment, String userId) {
+        if (comment.isDeleted())
+            return DiaryCommentResponse.ofDeletedComment(comment.getId(), diaryCommentRedisService.getDiaryReCommentCountByCommentId(comment.getId()));
+        return DiaryCommentResponse.from(comment, userId,
+                diaryCommentRedisService.isDiaryCommentLikeExistByCommentIdAndUserId(comment.getId(), userId),
+                diaryCommentRedisService.getLikeCountByCommentId(comment.getId()),
+                diaryCommentRedisService.getDiaryReCommentCountByCommentId(comment.getId()));
     }
 
     public void likeComment(User user, Long petId, Long commentId) {
-        DiaryComment parentComment = diaryCommentRepository.findByIdAndPetIdAndIsDeletedFalse(commentId, petId)
+        DiaryComment comment = diaryCommentRepository.findByIdAndPetIdAndIsDeletedFalse(commentId, petId)
                 .orElseThrow(() -> new DiaryException(DIARY_COMMENT_NOT_FOUND));
-        validateAccessDiary(petId, user, parentComment.getDiary());
+        diaryAccessValidator.validateAccessDiary(petId, user.getId(), comment.getDiary());
 
         if (diaryCommentRedisService.isDiaryCommentLikeExistByCommentIdAndUserId(commentId, user.getId()))
             diaryCommentRedisService.cancelLikeByCommentIdAndUserId(commentId, user.getId());
@@ -139,7 +136,7 @@ public class DiaryCommentService {
     public DiaryReCommentResponse createReComment(User user, Long petId, Long commentId, DiaryCommentRequest request) {
         DiaryComment parentComment = diaryCommentRepository.findByIdAndPetIdAndIsDeletedFalse(commentId, petId)
                 .orElseThrow(() -> new DiaryException(DIARY_COMMENT_NOT_FOUND));
-        validateAccessDiary(petId, user, parentComment.getDiary());
+        diaryAccessValidator.validateAccessDiary(petId, user.getId(), parentComment.getDiary());
 
         DiaryComment savedComment = diaryCommentRepository.save(DiaryComment.builder()
                 .content(request.getContent())
@@ -152,7 +149,8 @@ public class DiaryCommentService {
         return DiaryReCommentResponse.from(savedComment, user.getId());
     }
 
-    public List<DiaryReCommentResponse> displayReComments(User user, Long petId, Long ancestorId) {
+    public List<DiaryReCommentResponse> displayReComments(User user, Long petId, Long diaryId, Long ancestorId) {
+        diaryAccessValidator.validateAccessDiary(petId, user.getId(), diaryId);
         return diaryCommentRepository.findByAncestorCommentIdAndIsDeletedFalseOrderByIdDesc(ancestorId).stream()
                 .map(recomment -> DiaryReCommentResponse.from(recomment, user.getId(),
                         diaryCommentRedisService.isDiaryCommentLikeExistByCommentIdAndUserId(recomment.getId(), user.getId()),

@@ -127,10 +127,11 @@ public class DiaryCommentController {
             @ApiResponse(responseCode = "400", description = "요청 필드 에러", content = {@Content(schema = @Schema(implementation = ExceptionResponse.class))}),
             @ApiResponse(responseCode = "403", description = "기록 공간에 대한 권한 없음", content = {@Content(schema = @Schema(implementation = ExceptionResponse.class))})
     })
-    @GetMapping(value = "/comments/{ancestorId}/recomment")
+    @GetMapping(value = "/{diaryId}/comments/{ancestorId}/recomment")
     private ResponseEntity<List<DiaryReCommentResponse>> displayReComments(@PathVariable Long petId,
+                                                                           @PathVariable Long diaryId,
                                                                            @PathVariable Long ancestorId,
                                                                            @AuthenticationPrincipal PrincipalDetails principalDetails) {
-        return ResponseEntity.ok(diaryCommentService.displayReComments(principalDetails.getUser(), petId, ancestorId));
+        return ResponseEntity.ok(diaryCommentService.displayReComments(principalDetails.getUser(), petId, diaryId, ancestorId));
     }
 }

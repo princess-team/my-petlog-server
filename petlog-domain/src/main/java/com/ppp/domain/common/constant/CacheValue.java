@@ -12,6 +12,7 @@ public enum CacheValue {
     DIARY_LIKE_COUNT("diaryLikeCount"),
     DIARY_COMMENT_LIKE_COUNT("diaryCommentLikeCount"),
     DIARY_MOST_USED_TERMS("diaryMostUsedTerms"),
+    DIARY_ACCESS_AUTHORITY("diaryAccessAuthority"),
     SUBSCRIPTION_INFO("subscriptionInfo")
     ;
 
