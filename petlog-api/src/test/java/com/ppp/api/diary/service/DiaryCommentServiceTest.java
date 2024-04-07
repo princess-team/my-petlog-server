@@ -4,12 +4,12 @@ import com.ppp.api.diary.dto.request.DiaryCommentRequest;
 import com.ppp.api.diary.dto.response.DiaryCommentResponse;
 import com.ppp.api.diary.dto.response.DiaryReCommentResponse;
 import com.ppp.api.diary.exception.DiaryException;
+import com.ppp.api.diary.validator.DiaryAccessValidator;
 import com.ppp.common.util.TimeUtil;
 import com.ppp.domain.diary.Diary;
 import com.ppp.domain.diary.DiaryComment;
 import com.ppp.domain.diary.repository.DiaryCommentRepository;
 import com.ppp.domain.diary.repository.DiaryRepository;
-import com.ppp.domain.guardian.repository.GuardianRepository;
 import com.ppp.domain.pet.Pet;
 import com.ppp.domain.user.User;
 import com.ppp.domain.user.repository.UserRepository;
@@ -44,13 +44,13 @@ class DiaryCommentServiceTest {
     @Mock
     private DiaryRepository diaryRepository;
     @Mock
-    private GuardianRepository guardianRepository;
-    @Mock
     private UserRepository userRepository;
     @Mock
     private DiaryCommentRedisService diaryCommentRedisService;
     @Mock
     private ApplicationEventPublisher applicationEventPublisher;
+    @Mock
+    private DiaryAccessValidator diaryAccessValidator;
     @InjectMocks
     private DiaryCommentService diaryCommentService;
 
@@ -112,8 +112,6 @@ class DiaryCommentServiceTest {
 
         given(diaryRepository.findByIdAndIsDeletedFalse(anyLong()))
                 .willReturn(Optional.of(diary));
-        given(guardianRepository.existsByUserIdAndPetId(anyString(), anyLong()))
-                .willReturn(true);
         given(userRepository.findByGuardianUsersByPetIdAndUserIdsContaining(anyLong(), anyList())).willReturn(List.of(userA));
         given(mockDiaryComment.getTaggedUsersIdNicknameMap()).willReturn(taggedUserIdNicknameMap);
         given(diaryCommentRepository.save(any()))
@@ -148,8 +146,6 @@ class DiaryCommentServiceTest {
 
         given(diaryRepository.findByIdAndIsDeletedFalse(anyLong()))
                 .willReturn(Optional.of(diary));
-        given(guardianRepository.existsByUserIdAndPetId(anyString(), anyLong()))
-                .willReturn(true);
         given(mockDiaryComment.getTaggedUsersIdNicknameMap()).willReturn(new HashMap<>());
         given(diaryCommentRepository.save(any()))
                 .willReturn(mockDiaryComment);
@@ -199,22 +195,6 @@ class DiaryCommentServiceTest {
     }
 
     @Test
-    @DisplayName("다이어리 댓글 생성 실패-forbidden pet space")
-    void createComment_fail_FORBIDDEN_PET_SPACE() {
-        //given
-        DiaryCommentRequest request = new DiaryCommentRequest("오늘은 산으로 산책을 갔어요", List.of("abc123", "dab456"));
-
-        given(diaryRepository.findByIdAndIsDeletedFalse(anyLong()))
-                .willReturn(Optional.of(diary));
-        given(guardianRepository.existsByUserIdAndPetId(anyString(), anyLong()))
-                .willReturn(false);
-        //when
-        DiaryException exception = assertThrows(DiaryException.class, () -> diaryCommentService.createComment(user, 1L, 1L, request));
-        //then
-        assertEquals(FORBIDDEN_PET_SPACE.getCode(), exception.getCode());
-    }
-
-    @Test
     @DisplayName("다이어리 댓글 수정 성공")
     void updateComment_success() {
         //given
@@ -229,8 +209,6 @@ class DiaryCommentServiceTest {
         given(diaryCommentRepository.findByIdAndPetIdAndIsDeletedFalse(anyLong(), anyLong()))
                 .willReturn(Optional.of(diaryComment));
         given(userRepository.findByGuardianUsersByPetIdAndUserIdsContaining(anyLong(), anyList())).willReturn(List.of(userA));
-        given(guardianRepository.existsByUserIdAndPetId(anyString(), anyLong()))
-                .willReturn(true);
         //when
         diaryCommentService.updateComment(user, 1L, 1L, request);
         ArgumentCaptor<DiaryComment> diaryCommentArgumentCaptor = ArgumentCaptor.forClass(DiaryComment.class);
@@ -279,29 +257,6 @@ class DiaryCommentServiceTest {
         //then
         assertEquals(NOT_DIARY_COMMENT_OWNER.getCode(), exception.getCode());
     }
-
-    @Test
-    @DisplayName("다이어리 댓글 수정 실패-forbidden pet space")
-    void updateComment_success_FORBIDDEN_PET_SPACE() {
-        //given
-        DiaryCommentRequest request = new DiaryCommentRequest("오늘은 산으로 산책을 갔어요", List.of("abc123", "dab456"));
-
-        DiaryComment diaryComment = DiaryComment.builder()
-                .content("오늘은 바다로 산책을 갔어요")
-                .taggedUsersIdNicknameMap(taggedUserIdNicknameMap)
-                .diary(diary)
-                .user(user)
-                .build();
-        given(diaryCommentRepository.findByIdAndPetIdAndIsDeletedFalse(anyLong(), anyLong()))
-                .willReturn(Optional.of(diaryComment));
-        given(guardianRepository.existsByUserIdAndPetId(anyString(), anyLong()))
-                .willReturn(false);
-        //when
-        DiaryException exception = assertThrows(DiaryException.class, () -> diaryCommentService.updateComment(user, 1L, 1L, request));
-        //then
-        assertEquals(FORBIDDEN_PET_SPACE.getCode(), exception.getCode());
-    }
-
     @Test
     @DisplayName("다이어리 댓글 삭제 성공")
     void deleteComment_success() {
@@ -315,8 +270,6 @@ class DiaryCommentServiceTest {
                 .build();
         given(diaryCommentRepository.findByIdAndPetIdAndIsDeletedFalse(anyLong(), anyLong()))
                 .willReturn(Optional.of(diaryComment));
-        given(guardianRepository.existsByUserIdAndPetId(anyString(), anyLong()))
-                .willReturn(true);
         //when
         diaryCommentService.deleteComment(user, 1L, 1L);
         //then
@@ -356,34 +309,10 @@ class DiaryCommentServiceTest {
     }
 
     @Test
-    @DisplayName("다이어리 댓글 삭제 실패-forbidden pet space")
-    void deleteComment_fail_FORBIDDEN_PET_SPACE() {
-        //given
-        DiaryComment diaryComment = DiaryComment.builder()
-                .content("오늘은 바다로 산책을 갔어요")
-                .taggedUsersIdNicknameMap(taggedUserIdNicknameMap)
-                .diary(diary)
-                .user(user)
-                .build();
-        given(diaryCommentRepository.findByIdAndPetIdAndIsDeletedFalse(anyLong(), anyLong()))
-                .willReturn(Optional.of(diaryComment));
-        given(guardianRepository.existsByUserIdAndPetId(anyString(), anyLong()))
-                .willReturn(false);
-        //when
-        DiaryException exception = assertThrows(DiaryException.class, () -> diaryCommentService.deleteComment(user, 1L, 1L));
-        //then
-        assertEquals(FORBIDDEN_PET_SPACE.getCode(), exception.getCode());
-    }
-
-    @Test
     @DisplayName("다이어리 댓글 조회 성공")
     void displayComments_success() {
         //given
-        given(diaryRepository.findByIdAndIsDeletedFalse(anyLong()))
-                .willReturn(Optional.of(diary));
-        given(guardianRepository.existsByUserIdAndPetId(anyString(), anyLong()))
-                .willReturn(true);
-        given(diaryCommentRepository.findByDiaryAndAncestorCommentIdIsNullAndIsDeletedFalse(any(), any()))
+        given(diaryCommentRepository.findAncestorCommentByDiaryId(any(), any()))
                 .willReturn(new SliceImpl<>(List.of(
                         DiaryComment.builder()
                                 .content("우리 체리 귀엽다 ~ ^^")
@@ -413,44 +342,6 @@ class DiaryCommentServiceTest {
         assertEquals(response.getContent().get(0).taggedUsers().get(0).nickname(), "둘째누나");
     }
 
-    @Test
-    @DisplayName("다이어리 댓글 조회 실패-diary not found")
-    void displayComments_fail_DIARY_NOT_FOUND() {
-        //given
-        given(diaryRepository.findByIdAndIsDeletedFalse(anyLong()))
-                .willReturn(Optional.empty());
-        //when
-        DiaryException exception = assertThrows(DiaryException.class, () -> diaryCommentService.displayComments(user, 1L, 1L, 1, 10));
-        //then
-        assertEquals(DIARY_NOT_FOUND.getCode(), exception.getCode());
-    }
-
-    @Test
-    @DisplayName("다이어리 댓글 조회 실패-diary not found-다이어리 pet id와 주어진 pet id가 다름")
-    void displayComments_fail_DIARY_NOT_FOUND_WhenGivenPetIdIsNotDiaryPetId() {
-        //given
-        given(diaryRepository.findByIdAndIsDeletedFalse(anyLong()))
-                .willReturn(Optional.of(diary));
-        //when
-        DiaryException exception = assertThrows(DiaryException.class, () -> diaryCommentService.displayComments(user, 2L, 1L, 1, 10));
-        //then
-        assertEquals(DIARY_NOT_FOUND.getCode(), exception.getCode());
-    }
-
-
-    @Test
-    @DisplayName("다이어리 댓글 조회 실패-forbidden pet space")
-    void displayComments_fail_FORBIDDEN_PET_SPACE() {
-        //given
-        given(diaryRepository.findByIdAndIsDeletedFalse(anyLong()))
-                .willReturn(Optional.of(diary));
-        given(guardianRepository.existsByUserIdAndPetId(anyString(), anyLong()))
-                .willReturn(false);
-        //when
-        DiaryException exception = assertThrows(DiaryException.class, () -> diaryCommentService.displayComments(user, 1L, 1L, 1, 10));
-        //then
-        assertEquals(FORBIDDEN_PET_SPACE.getCode(), exception.getCode());
-    }
 
     @Test
     @DisplayName("다이어리 댓글 좋아요 성공-좋아요 등록")
@@ -459,13 +350,11 @@ class DiaryCommentServiceTest {
         DiaryComment diaryComment = DiaryComment.builder()
                 .content("오늘은 바다로 산책을 갔어요")
                 .taggedUsersIdNicknameMap(taggedUserIdNicknameMap)
-                .diary(diary)
+                .diary(mockDiary)
                 .user(user)
                 .build();
         given(diaryCommentRepository.findByIdAndPetIdAndIsDeletedFalse(anyLong(), anyLong()))
                 .willReturn(Optional.of(diaryComment));
-        given(guardianRepository.existsByUserIdAndPetId(anyString(), anyLong()))
-                .willReturn(true);
         given(diaryCommentRedisService.isDiaryCommentLikeExistByCommentIdAndUserId(anyLong(), anyString()))
                 .willReturn(false);
 
@@ -487,8 +376,6 @@ class DiaryCommentServiceTest {
                 .build();
         given(diaryCommentRepository.findByIdAndPetIdAndIsDeletedFalse(anyLong(), anyLong()))
                 .willReturn(Optional.of(diaryComment));
-        given(guardianRepository.existsByUserIdAndPetId(anyString(), anyLong()))
-                .willReturn(true);
         given(diaryCommentRedisService.isDiaryCommentLikeExistByCommentIdAndUserId(anyLong(), anyString()))
                 .willReturn(true);
 
@@ -510,25 +397,6 @@ class DiaryCommentServiceTest {
         assertEquals(DIARY_COMMENT_NOT_FOUND.getCode(), exception.getCode());
     }
 
-    @Test
-    @DisplayName("다이어리 댓글 좋아요 실패-forbidden pet space")
-    void likeComment_fail_FORBIDDEN_PET_SPACE() {
-        //given
-        DiaryComment diaryComment = DiaryComment.builder()
-                .content("오늘은 바다로 산책을 갔어요")
-                .taggedUsersIdNicknameMap(taggedUserIdNicknameMap)
-                .diary(diary)
-                .user(user)
-                .build();
-        given(diaryCommentRepository.findByIdAndPetIdAndIsDeletedFalse(anyLong(), anyLong()))
-                .willReturn(Optional.of(diaryComment));
-        given(guardianRepository.existsByUserIdAndPetId(anyString(), anyLong()))
-                .willReturn(false);
-        //when
-        DiaryException exception = assertThrows(DiaryException.class, () -> diaryCommentService.likeComment(user, 1L, 1L));
-        //then
-        assertEquals(FORBIDDEN_PET_SPACE.getCode(), exception.getCode());
-    }
 
     @Test
     @DisplayName("다이어리 대댓글 생성 성공")
@@ -542,8 +410,6 @@ class DiaryCommentServiceTest {
                         .diary(diary)
                         .user(user)
                         .build()));
-        given(guardianRepository.existsByUserIdAndPetId(anyString(), anyLong()))
-                .willReturn(true);
         given(userRepository.findByGuardianUsersByPetIdAndUserIdsContaining(anyLong(), anyList())).willReturn(List.of(userA));
         given(mockDiaryComment.getTaggedUsersIdNicknameMap()).willReturn(taggedUserIdNicknameMap);
         given(diaryCommentRepository.save(any()))
@@ -584,33 +450,13 @@ class DiaryCommentServiceTest {
     }
 
     @Test
-    @DisplayName("다이어리 대댓글 생성 실패-FORBIDDEN_PET_SPACE")
-    void createReComment_fail_FORBIDDEN_PET_SPACE() {
-        //given
-        DiaryCommentRequest request = new DiaryCommentRequest("오늘은 산으로 산책을 갔어요", List.of("abc123", "dab456"));
-        given(diaryCommentRepository.findByIdAndPetIdAndIsDeletedFalse(anyLong(), anyLong()))
-                .willReturn(Optional.of(DiaryComment.builder()
-                        .content("오늘은 바다로 산책을 갔어요")
-                        .taggedUsersIdNicknameMap(taggedUserIdNicknameMap)
-                        .diary(diary)
-                        .user(user)
-                        .build()));
-        given(guardianRepository.existsByUserIdAndPetId(anyString(), anyLong()))
-                .willReturn(false);
-        //when
-        DiaryException exception = assertThrows(DiaryException.class, () -> diaryCommentService.createReComment(user, 1L, 1L, request));
-        //then
-        assertEquals(FORBIDDEN_PET_SPACE.getCode(), exception.getCode());
-    }
-
-    @Test
     @DisplayName("다이어리 대댓글 조회 성공")
     void displayReComments_success() {
         //given
         DiaryComment ancestor = DiaryComment.builder()
                 .content("우리 체리 귀엽다")
                 .user(userA)
-                .diary(diary)
+                .diary(mockDiary)
                 .taggedUsersIdNicknameMap(new HashMap<>())
                 .build();
         DiaryComment parent = DiaryComment.builder()
@@ -630,7 +476,7 @@ class DiaryCommentServiceTest {
                                 .parent(parent)
                                 .taggedUsersIdNicknameMap(new HashMap<>())
                                 .build()));//when
-        List<DiaryReCommentResponse> responses = diaryCommentService.displayReComments(user, 1L, 1L);
+        List<DiaryReCommentResponse> responses = diaryCommentService.displayReComments(user, 1L, 1L, 1L);
         //then
         assertEquals(responses.get(0).content(), "체리 진짜 귀엽지");
         assertEquals(responses.get(1).content(), "그니까 체리 짱귀");
@@ -648,6 +494,6 @@ class DiaryCommentServiceTest {
         assertEquals(responses.get(0).taggedUsers().get(0).id(), "ljf123");
         assertEquals(responses.get(0).taggedUsers().get(0).nickname(), "둘째누나");
     }
-    
+
 
 }
