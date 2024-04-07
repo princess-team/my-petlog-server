@@ -8,12 +8,13 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
+import java.util.Set;
 
 @Repository
 public interface DiaryRepository extends JpaRepository<Diary, Long> {
     @EntityGraph(attributePaths = {"user", "pet", "diaryMedias"}, type = EntityGraph.EntityGraphType.FETCH)
     Optional<Diary> findByIdAndIsDeletedFalse(Long id);
     @EntityGraph(attributePaths = {"user"}, type = EntityGraph.EntityGraphType.FETCH)
-    Slice<Diary> findByPetIdAndIsDeletedFalseOrderByDateDesc(Long petId, PageRequest pageRequest);
+    Slice<Diary> findByPetIdAndIsDeletedFalseAndIsPublicInOrderByDateDesc(Long petId, Set<Boolean> isPublicFilter, PageRequest pageRequest);
     boolean existsByIdAndIsDeletedFalse(Long id);
 }

@@ -107,7 +107,7 @@ class DiarySearchServiceTest {
                 .willReturn(true);
         given(diaryCommentRedisService.getDiaryCommentCountByDiaryId(any()))
                 .willReturn(3);
-        given(diarySearchRepository.findByTitleContainsOrContentContainsAndPetIdOrderByDateDesc(anyString(), anyLong(), any()))
+        given(diarySearchRepository.findByTitleContainsOrContentContainsAndPetIdOrderByDateDesc(anyString(), anyLong(), anySet(), any()))
                 .willReturn(new PageImpl<>(
                         List.of(
                                 DiaryDocument.builder()
@@ -164,18 +164,6 @@ class DiarySearchServiceTest {
         assertEquals(response.getContent().get(1).diaries().get(0).writer().id(), "abcde1234");
         assertEquals(response.getContent().get(1).diaries().get(0).writer().nickname(), "엄마");
         assertTrue(response.getContent().get(1).diaries().get(0).writer().isCurrentUser());
-    }
-
-    @Test
-    @DisplayName("검색 실패_forbidden pet space")
-    void search_fail_FORBIDDEN_PET_SPACE() {
-        //given
-        given(guardianRepository.existsByUserIdAndPetId(anyString(), anyLong()))
-                .willReturn(false);
-        //when
-        DiaryException exception = assertThrows(DiaryException.class, () -> diarySearchService.search(user, "우리집", 1L, 0, 10));
-        //then
-        assertEquals(FORBIDDEN_PET_SPACE.getCode(), exception.getCode());
     }
 
     @Test

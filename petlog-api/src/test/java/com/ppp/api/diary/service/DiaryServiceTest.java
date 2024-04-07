@@ -800,7 +800,7 @@ class DiaryServiceTest {
         //given
         Diary diary = Diary.builder()
                 .title("우리집 고양이")
-                .isPublic(true)
+                .isPublic(false)
                 .content("츄르를 좋아해")
                 .date(LocalDate.of(2020, 11, 11))
                 .user(user)
@@ -854,7 +854,7 @@ class DiaryServiceTest {
                 .id("other-user").build();
         Diary diary = Diary.builder()
                 .title("우리집 고양이")
-                .isPublic(true)
+                .isPublic(false)
                 .content("츄르를 좋아해")
                 .date(LocalDate.of(2020, 11, 11))
                 .user(user)
@@ -873,7 +873,7 @@ class DiaryServiceTest {
     @DisplayName("일기 리스트 조회 성공")
     void displayDiaries_success() {
         //given
-        given(diaryRepository.findByPetIdAndIsDeletedFalseOrderByDateDesc(anyLong(), any()))
+        given(diaryRepository.findByPetIdAndIsDeletedFalseAndIsPublicInOrderByDateDesc(anyLong(), anySet(), any()))
                 .willReturn(new SliceImpl<>(List.of(
                         Diary.builder()
                                 .isPublic(true)
@@ -912,18 +912,6 @@ class DiaryServiceTest {
         assertEquals(response.getContent().get(1).diaries().get(0).title(), "우리집 강아지");
         assertEquals(response.getContent().get(1).diaries().get(0).content(), "츄르를 싫어해");
         assertEquals(response.getContent().get(1).diaries().get(0).commentCount(), 3);
-    }
-
-    @Test
-    @DisplayName("일기 조회 실패-forbidden pet space")
-    void displayDiaries_fail_FORBIDDEN_PET_SPACE() {
-        //given
-        given(guardianRepository.existsByUserIdAndPetId(user.getId(), pet.getId()))
-                .willReturn(false);
-        //when
-        DiaryException exception = assertThrows(DiaryException.class, () -> diaryService.displayDiaries(user, 1L, 10, 10));
-        //then
-        assertEquals(FORBIDDEN_PET_SPACE.getCode(), exception.getCode());
     }
 
     @Test

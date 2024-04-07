@@ -25,6 +25,7 @@ public interface DiaryCommentRepository extends JpaRepository<DiaryComment, Long
 
     boolean existsByIdAndIsDeletedFalse(Long id);
 
+    @EntityGraph(attributePaths = {"diary"}, type = EntityGraph.EntityGraphType.FETCH)
     @Query("select c from DiaryComment c inner join Diary d on d.id = c.diary.id where c.id = ?1 and d.pet.id = ?2 and c.isDeleted = false")
     Optional<DiaryComment> findByIdAndPetIdAndIsDeletedFalse(Long id, Long petId);
 }

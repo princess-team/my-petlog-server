@@ -39,6 +39,7 @@ public record DiaryResponse(
         return DiaryResponse.builder()
                 .diaryId(Long.parseLong(diaryDocument.getId()))
                 .title(diaryDocument.getTitle())
+                .isPublic(diaryDocument.isPublic())
                 .content(diaryDocument.getContent())
                 .thumbnailPath(diaryDocument.getThumbnailPath())
                 .writer(UserResponse.from(diaryDocument.getUser(), currentUserId))

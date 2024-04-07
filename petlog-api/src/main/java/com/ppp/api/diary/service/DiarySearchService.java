@@ -24,7 +24,9 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static com.ppp.api.diary.exception.ErrorCode.FORBIDDEN_PET_SPACE;
@@ -61,15 +63,13 @@ public class DiarySearchService {
     }
 
     public Page<DiaryGroupByDateResponse> search(User user, String keyword, Long petId, int page, int size) {
-        validateQueryDiaries(user, petId);
         return getGroupedDiariesPage(diarySearchRepository.
-                findByTitleContainsOrContentContainsAndPetIdOrderByDateDesc(keyword, petId,
+                findByTitleContainsOrContentContainsAndPetIdOrderByDateDesc(keyword, petId, getUsersDiaryViewingRange(user, petId),
                         PageRequest.of(page, size, Sort.by(Sort.Order.desc("date")))), user.getId());
     }
 
-    private void validateQueryDiaries(User user, Long petId) {
-        if (!guardianRepository.existsByUserIdAndPetId(user.getId(), petId))
-            throw new DiaryException(FORBIDDEN_PET_SPACE);
+    private Set<Boolean> getUsersDiaryViewingRange(User user, Long petId) {
+        return new HashSet<>(List.of(true, !guardianRepository.existsByUserIdAndPetId(user.getId(), petId)));
     }
 
     private Page<DiaryGroupByDateResponse> getGroupedDiariesPage(Page<DiaryDocument> documentPage, String userId) {
@@ -97,5 +97,10 @@ public class DiarySearchService {
     public DiaryMostUsedTermsResponse findMostUsedTermsByPetId(User user, Long petId) {
         validateQueryDiaries(user, petId);
         return DiaryMostUsedTermsResponse.from(diarySearchQuerydslRepository.findMostUsedTermsByPetId(petId));
+    }
+
+    private void validateQueryDiaries(User user, Long petId) {
+        if (!guardianRepository.existsByUserIdAndPetId(user.getId(), petId))
+            throw new DiaryException(FORBIDDEN_PET_SPACE);
     }
 }

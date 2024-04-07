@@ -9,7 +9,6 @@ import com.ppp.api.diary.dto.response.DiaryDetailResponse;
 import com.ppp.api.diary.dto.response.DiaryGroupByDateResponse;
 import com.ppp.api.diary.dto.response.DiaryResponse;
 import com.ppp.api.diary.exception.DiaryException;
-import com.ppp.api.notification.dto.event.DiaryNotificationEvent;
 import com.ppp.api.pet.exception.PetException;
 import com.ppp.api.video.exception.ErrorCode;
 import com.ppp.api.video.exception.VideoException;
@@ -22,7 +21,6 @@ import com.ppp.domain.diary.constant.DiaryMediaType;
 import com.ppp.domain.diary.constant.DiaryPolicy;
 import com.ppp.domain.diary.repository.DiaryRepository;
 import com.ppp.domain.guardian.repository.GuardianRepository;
-import com.ppp.domain.notification.constant.MessageCode;
 import com.ppp.domain.pet.Pet;
 import com.ppp.domain.pet.repository.PetRepository;
 import com.ppp.domain.user.User;
@@ -39,9 +37,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.ppp.api.diary.exception.ErrorCode.*;
@@ -66,7 +62,7 @@ public class DiaryService {
     public void createDiary(User user, Long petId, DiaryCreateRequest request, List<MultipartFile> images) {
         Pet pet = petRepository.findByIdAndIsDeletedFalse(petId)
                 .orElseThrow(() -> new PetException(PET_NOT_FOUND));
-        validateAccessDiary(petId, user);
+        validateWriteDiary(petId, user);
         List<TempVideo> uploadedVideos = getUploadedVideos(request.getUploadedVideoIds(), user);
 
         Diary diary = Diary.builder()
@@ -81,6 +77,11 @@ public class DiaryService {
 
         applicationEventPublisher.publishEvent(
                 new DiaryCreatedEvent(diaryRepository.save(diary).getId()));
+    }
+
+    private void validateWriteDiary(Long petId, User user) {
+        if (!guardianRepository.existsByUserIdAndPetId(user.getId(), petId))
+            throw new DiaryException(FORBIDDEN_PET_SPACE);
     }
 
     private List<TempVideo> getUploadedVideos(List<String> videoIds, User user) {
@@ -149,7 +150,7 @@ public class DiaryService {
     private void validateModifyDiary(Diary diary, User user, Long petId) {
         if (!Objects.equals(diary.getUser().getId(), user.getId()))
             throw new DiaryException(NOT_DIARY_OWNER);
-        validateAccessDiary(petId, user);
+        validateWriteDiary(petId, user);
     }
 
 
@@ -169,7 +170,7 @@ public class DiaryService {
         Diary diary = diaryRepository.findByIdAndIsDeletedFalse(diaryId)
                 .filter(foundDiary -> Objects.equals(foundDiary.getPet().getId(), petId))
                 .orElseThrow(() -> new DiaryException(DIARY_NOT_FOUND));
-        validateAccessDiary(petId, user);
+        validateAccessDiary(petId, user, diary);
         return DiaryDetailResponse.from(diary, user.getId(),
                 diaryCommentRedisService.getDiaryCommentCountByDiaryId(diaryId),
                 diaryRedisService.isLikeExistByDiaryIdAndUserId(diaryId, user.getId()),
@@ -177,10 +178,14 @@ public class DiaryService {
     }
 
     public Slice<DiaryGroupByDateResponse> displayDiaries(User user, Long petId, int page, int size) {
-        validateAccessDiary(petId, user);
         return getGroupedDiariesSlice(
-                diaryRepository.findByPetIdAndIsDeletedFalseOrderByDateDesc(petId,
+                diaryRepository.findByPetIdAndIsDeletedFalseAndIsPublicInOrderByDateDesc(
+                        petId, getUsersDiaryViewingRange(user, petId),
                         PageRequest.of(page, size)), user.getId());
+    }
+
+    private Set<Boolean> getUsersDiaryViewingRange(User user, Long petId) {
+        return new HashSet<>(List.of(true, !guardianRepository.existsByUserIdAndPetId(user.getId(), petId)));
     }
 
     private Slice<DiaryGroupByDateResponse> getGroupedDiariesSlice(Slice<Diary> diarySlice, String userId) {
@@ -205,7 +210,8 @@ public class DiaryService {
         return new SliceImpl<>(content, diarySlice.getPageable(), diarySlice.hasNext());
     }
 
-    private void validateAccessDiary(Long petId, User user) {
+    private void validateAccessDiary(Long petId, User user, Diary diary) {
+        if (diary.isPublic()) return;
         if (!guardianRepository.existsByUserIdAndPetId(user.getId(), petId))
             throw new DiaryException(FORBIDDEN_PET_SPACE);
     }

@@ -22,13 +22,15 @@ public class DiaryDocument extends BaseDocument {
 
     private String thumbnailPath;
 
+    private boolean isPublic;
+
     @Field(type = FieldType.Nested)
     private UserDocument user;
 
     private long petId;
 
     @Builder
-    public DiaryDocument(String id, String title, String content, Long date, String thumbnailPath, long petId, UserDocument user) {
+    public DiaryDocument(String id, String title, String content, Long date, String thumbnailPath, long petId, boolean isPublic, UserDocument user) {
         super(id);
         this.title = title;
         this.content = content;
@@ -36,6 +38,7 @@ public class DiaryDocument extends BaseDocument {
         this.thumbnailPath = thumbnailPath;
         this.user = user;
         this.petId = petId;
+        this.isPublic = isPublic;
     }
 
     public static DiaryDocument from(Diary diary) {
@@ -43,6 +46,7 @@ public class DiaryDocument extends BaseDocument {
                 .id(diary.getId() + "")
                 .content(diary.getContent())
                 .title(diary.getTitle())
+                .isPublic(diary.isPublic())
                 .date(diary.getDate().toEpochDay())
                 .thumbnailPath(diary.getThumbnailPath())
                 .petId(diary.getPet().getId())

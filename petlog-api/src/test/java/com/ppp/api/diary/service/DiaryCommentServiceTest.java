@@ -72,6 +72,7 @@ class DiaryCommentServiceTest {
     static Diary diary = Diary.builder()
             .title("우리집 고양이")
             .content("츄르를 좋아해")
+            .isPublic(false)
             .date(LocalDate.of(2020, 11, 11))
             .user(user)
             .pet(pet).build();
@@ -455,8 +456,14 @@ class DiaryCommentServiceTest {
     @DisplayName("다이어리 댓글 좋아요 성공-좋아요 등록")
     void likeComment_success() {
         //given
-        given(diaryCommentRepository.existsByIdAndIsDeletedFalse(anyLong()))
-                .willReturn(true);
+        DiaryComment diaryComment = DiaryComment.builder()
+                .content("오늘은 바다로 산책을 갔어요")
+                .taggedUsersIdNicknameMap(taggedUserIdNicknameMap)
+                .diary(diary)
+                .user(user)
+                .build();
+        given(diaryCommentRepository.findByIdAndPetIdAndIsDeletedFalse(anyLong(), anyLong()))
+                .willReturn(Optional.of(diaryComment));
         given(guardianRepository.existsByUserIdAndPetId(anyString(), anyLong()))
                 .willReturn(true);
         given(diaryCommentRedisService.isDiaryCommentLikeExistByCommentIdAndUserId(anyLong(), anyString()))
@@ -472,8 +479,14 @@ class DiaryCommentServiceTest {
     @DisplayName("다이어리 댓글 좋아요 성공-좋아요 취소")
     void likeComment_success_WhenLikeAlreadyExists() {
         //given
-        given(diaryCommentRepository.existsByIdAndIsDeletedFalse(anyLong()))
-                .willReturn(true);
+        DiaryComment diaryComment = DiaryComment.builder()
+                .content("오늘은 바다로 산책을 갔어요")
+                .taggedUsersIdNicknameMap(taggedUserIdNicknameMap)
+                .diary(diary)
+                .user(user)
+                .build();
+        given(diaryCommentRepository.findByIdAndPetIdAndIsDeletedFalse(anyLong(), anyLong()))
+                .willReturn(Optional.of(diaryComment));
         given(guardianRepository.existsByUserIdAndPetId(anyString(), anyLong()))
                 .willReturn(true);
         given(diaryCommentRedisService.isDiaryCommentLikeExistByCommentIdAndUserId(anyLong(), anyString()))
@@ -489,8 +502,8 @@ class DiaryCommentServiceTest {
     @DisplayName("다이어리 댓글 좋아요 실패-diary comment not found")
     void likeComment_fail_DIARY_COMMENT_NOT_FOUND() {
         //given
-        given(diaryCommentRepository.existsByIdAndIsDeletedFalse(anyLong()))
-                .willReturn(false);
+        given(diaryCommentRepository.findByIdAndPetIdAndIsDeletedFalse(anyLong(), anyLong()))
+                .willReturn(Optional.empty());
         //when
         DiaryException exception = assertThrows(DiaryException.class, () -> diaryCommentService.likeComment(user, 1L, 1L));
         //then
@@ -501,8 +514,14 @@ class DiaryCommentServiceTest {
     @DisplayName("다이어리 댓글 좋아요 실패-forbidden pet space")
     void likeComment_fail_FORBIDDEN_PET_SPACE() {
         //given
-        given(diaryCommentRepository.existsByIdAndIsDeletedFalse(anyLong()))
-                .willReturn(true);
+        DiaryComment diaryComment = DiaryComment.builder()
+                .content("오늘은 바다로 산책을 갔어요")
+                .taggedUsersIdNicknameMap(taggedUserIdNicknameMap)
+                .diary(diary)
+                .user(user)
+                .build();
+        given(diaryCommentRepository.findByIdAndPetIdAndIsDeletedFalse(anyLong(), anyLong()))
+                .willReturn(Optional.of(diaryComment));
         given(guardianRepository.existsByUserIdAndPetId(anyString(), anyLong()))
                 .willReturn(false);
         //when
@@ -588,11 +607,10 @@ class DiaryCommentServiceTest {
     @DisplayName("다이어리 대댓글 조회 성공")
     void displayReComments_success() {
         //given
-        given(guardianRepository.existsByUserIdAndPetId(anyString(), anyLong()))
-                .willReturn(true);
         DiaryComment ancestor = DiaryComment.builder()
                 .content("우리 체리 귀엽다")
                 .user(userA)
+                .diary(diary)
                 .taggedUsersIdNicknameMap(new HashMap<>())
                 .build();
         DiaryComment parent = DiaryComment.builder()
@@ -602,7 +620,6 @@ class DiaryCommentServiceTest {
                 .user(user)
                 .taggedUsersIdNicknameMap(taggedUserIdNicknameMap)
                 .build();
-
         given(diaryCommentRepository.findByAncestorCommentIdAndIsDeletedFalseOrderByIdDesc(anyLong()))
                 .willReturn(List.of(
                         parent,
@@ -612,8 +629,7 @@ class DiaryCommentServiceTest {
                                 .user(userA)
                                 .parent(parent)
                                 .taggedUsersIdNicknameMap(new HashMap<>())
-                                .build()));
-        //when
+                                .build()));//when
         List<DiaryReCommentResponse> responses = diaryCommentService.displayReComments(user, 1L, 1L);
         //then
         assertEquals(responses.get(0).content(), "체리 진짜 귀엽지");
@@ -632,17 +648,6 @@ class DiaryCommentServiceTest {
         assertEquals(responses.get(0).taggedUsers().get(0).id(), "ljf123");
         assertEquals(responses.get(0).taggedUsers().get(0).nickname(), "둘째누나");
     }
-
-    @Test
-    @DisplayName("다이어리 대댓글 조회 실패-FORBIDDEN_PET_SPACE")
-    void displayReComments_fail_FORBIDDEN_PET_SPACE() {
-        //given
-        given(guardianRepository.existsByUserIdAndPetId(anyString(), anyLong()))
-                .willReturn(false);
-        //when
-        DiaryException exception = assertThrows(DiaryException.class, () -> diaryCommentService.displayReComments(user, 1L, 1L));
-        //then
-        assertEquals(FORBIDDEN_PET_SPACE.getCode(), exception.getCode());
-    }
+    
 
 }

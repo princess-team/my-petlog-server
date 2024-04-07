@@ -3,6 +3,7 @@ package com.ppp.api.diary.service;
 import com.ppp.api.diary.dto.response.DiaryFeedResponse;
 import com.ppp.api.subscription.dto.transfer.SubscriptionInfoDto;
 import com.ppp.api.subscription.service.SubscriptionService;
+import com.ppp.common.security.PrincipalDetails;
 import com.ppp.domain.diary.dto.PetDiaryDto;
 import com.ppp.domain.diary.repository.DiaryQuerydslRepository;
 import com.ppp.domain.user.User;
@@ -11,10 +12,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @Service
@@ -26,9 +25,16 @@ public class DiaryFeedService {
     private final DiaryCommentRedisService diaryCommentRedisService;
     private final DiaryRedisService diaryRedisService;
 
-    public Set<DiaryFeedResponse> retrieveDiaryFeed(User user, int page, int size) {
-        SubscriptionInfoDto subscriptionInfo = subscriptionService.getUsersSubscriptionInfo(user.getId());
+    public Set<DiaryFeedResponse> retrieveDiaryFeed(Optional<PrincipalDetails> optionalPrincipalDetails, int page, int size) {
+        if (optionalPrincipalDetails.isEmpty())
+            return diaryQuerydslRepository.findRandomPetsDiaries(PageRequest.of(page, size))
+                    .stream().map(this::toDiaryFeedResponse).collect(Collectors.toSet());
+        User requestdUser = optionalPrincipalDetails.get().getUser();
+        return retrieveUsersDiaryFeed(requestdUser, page, size);
+    }
 
+    private Set<DiaryFeedResponse> retrieveUsersDiaryFeed(User user, int page, int size) {
+        SubscriptionInfoDto subscriptionInfo = subscriptionService.getUsersSubscriptionInfo(user.getId());
         List<DiaryFeedResponse> subscribedPetsDiaries = new ArrayList<>();
         if (!subscriptionInfo.subscribedPetIds().isEmpty()) {
             subscribedPetsDiaries = diaryQuerydslRepository
@@ -54,6 +60,12 @@ public class DiaryFeedService {
         return DiaryFeedResponse.from(dto,
                 diaryCommentRedisService.getDiaryCommentCountByDiaryId(dto.getDiaryId()),
                 diaryRedisService.isLikeExistByDiaryIdAndUserId(dto.getDiaryId(), userId),
+                diaryRedisService.getLikeCountByDiaryId(dto.getDiaryId()));
+    }
+
+    private DiaryFeedResponse toDiaryFeedResponse(PetDiaryDto dto) {
+        return DiaryFeedResponse.from(dto,
+                diaryCommentRedisService.getDiaryCommentCountByDiaryId(dto.getDiaryId()),
                 diaryRedisService.getLikeCountByDiaryId(dto.getDiaryId()));
     }
 }
