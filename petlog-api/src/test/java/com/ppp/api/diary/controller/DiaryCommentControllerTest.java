@@ -142,7 +142,7 @@ class DiaryCommentControllerTest {
     void displayReComments_success() throws Exception {
         //given
         //when
-        mockMvc.perform(get("/api/v1/pets/{petId}/diaries/comments/{commentId}/recomment", 1L, 1L)
+        mockMvc.perform(get("/api/v1/pets/{petId}/diaries/{diaryId}/comments/{commentId}/recomment", 1L, 1L, 1L)
                         .header("Authorization", TOKEN)
                         .contentType(MediaType.APPLICATION_JSON_VALUE)
                 ).andDo(print())

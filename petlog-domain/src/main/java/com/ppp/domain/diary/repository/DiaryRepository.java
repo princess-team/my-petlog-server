@@ -14,7 +14,11 @@ import java.util.Set;
 public interface DiaryRepository extends JpaRepository<Diary, Long> {
     @EntityGraph(attributePaths = {"user", "pet", "diaryMedias"}, type = EntityGraph.EntityGraphType.FETCH)
     Optional<Diary> findByIdAndIsDeletedFalse(Long id);
+
     @EntityGraph(attributePaths = {"user"}, type = EntityGraph.EntityGraphType.FETCH)
     Slice<Diary> findByPetIdAndIsDeletedFalseAndIsPublicInOrderByDateDesc(Long petId, Set<Boolean> isPublicFilter, PageRequest pageRequest);
+
     boolean existsByIdAndIsDeletedFalse(Long id);
+
+    Optional<Diary> findByIdAndPetIdAndIsDeletedFalse(Long id, Long petId);
 }
