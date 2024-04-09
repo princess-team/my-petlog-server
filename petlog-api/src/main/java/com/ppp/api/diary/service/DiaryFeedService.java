@@ -39,10 +39,10 @@ public class DiaryFeedService {
         if (!subscriptionInfo.subscribedPetIds().isEmpty()) {
             subscribedPetsDiaries = diaryQuerydslRepository
                     .findSubscribedPetsDiariesBySubscription(subscriptionInfo.subscribedPetIds(), PageRequest.of(page, size / 2))
-                    .stream().map(dto -> toDiaryFeedResponse(dto, user.getId(), subscriptionInfo.subscribedPetIds())).toList();
+                    .stream().map(dto -> toDiaryFeedResponse(dto, user.getId())).toList();
         }
         List<DiaryFeedResponse> randomPetDiaries = diaryQuerydslRepository.findRandomPetsDiaries(subscriptionInfo.blockedPetIds(), PageRequest.of(page, size - subscribedPetsDiaries.size()))
-                .stream().map(dto -> toDiaryFeedResponse(dto, user.getId())).toList();
+                .stream().map(dto -> toDiaryFeedResponse(dto, user.getId(), subscriptionInfo.subscribedPetIds())).toList();
         Set<DiaryFeedResponse> response = new HashSet<>(subscribedPetsDiaries);
         response.addAll(randomPetDiaries);
         return response;

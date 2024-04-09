@@ -1,6 +1,7 @@
 package com.ppp.api.diary.service;
 
 import com.ppp.api.diary.exception.DiaryException;
+import com.ppp.api.diary.validator.DiaryAccessValidator;
 import com.ppp.api.user.dto.response.UserResponse;
 import com.ppp.domain.diary.Diary;
 import com.ppp.domain.diary.repository.DiaryRepository;
@@ -38,6 +39,8 @@ class DiaryLikeServiceTest {
     private DiaryRedisService diaryRedisService;
     @Mock
     private UserRepository userRepository;
+    @Mock
+    private DiaryAccessValidator diaryAccessValidator;
     @InjectMocks
     private DiaryLikeService diaryLikeService;
 
