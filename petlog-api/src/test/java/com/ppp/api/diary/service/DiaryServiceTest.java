@@ -6,6 +6,7 @@ import com.ppp.api.diary.dto.request.DiaryUpdateRequest;
 import com.ppp.api.diary.dto.response.DiaryDetailResponse;
 import com.ppp.api.diary.dto.response.DiaryGroupByDateResponse;
 import com.ppp.api.diary.exception.DiaryException;
+import com.ppp.api.diary.validator.DiaryAccessValidator;
 import com.ppp.api.pet.exception.PetException;
 import com.ppp.api.video.exception.VideoException;
 import com.ppp.common.service.FileStorageManageService;
@@ -67,6 +68,8 @@ class DiaryServiceTest {
     private ThumbnailService thumbnailService;
     @Mock
     private ApplicationEventPublisher applicationEventPublisher;
+    @Mock
+    private DiaryAccessValidator diaryAccessValidator;
     @InjectMocks
     private DiaryService diaryService;
 
@@ -812,8 +815,6 @@ class DiaryServiceTest {
                         .build()));
         given(diaryRepository.findByIdAndIsDeletedFalse(anyLong()))
                 .willReturn(Optional.of(diary));
-        given(guardianRepository.existsByUserIdAndPetId(user.getId(), pet.getId()))
-                .willReturn(true);
         given(diaryCommentRedisService.getDiaryCommentCountByDiaryId(anyLong()))
                 .willReturn(3);
         given(diaryRedisService.isLikeExistByDiaryIdAndUserId(anyLong(), anyString()))
@@ -844,29 +845,6 @@ class DiaryServiceTest {
         DiaryException exception = assertThrows(DiaryException.class, () -> diaryService.displayDiary(otherUser, 1L, 1L));
         //then
         assertEquals(DIARY_NOT_FOUND.getCode(), exception.getCode());
-    }
-
-    @Test
-    @DisplayName("일기 상세 조회 실패-forbidden pet space")
-    void displayDiary_fail_FORBIDDEN_PET_SPACE() {
-        //given
-        User otherUser = User.builder()
-                .id("other-user").build();
-        Diary diary = Diary.builder()
-                .title("우리집 고양이")
-                .isPublic(false)
-                .content("츄르를 좋아해")
-                .date(LocalDate.of(2020, 11, 11))
-                .user(user)
-                .pet(pet).build();
-        given(diaryRepository.findByIdAndIsDeletedFalse(anyLong()))
-                .willReturn(Optional.of(diary));
-        given(guardianRepository.existsByUserIdAndPetId(anyString(), anyLong()))
-                .willReturn(false);
-        //when
-        DiaryException exception = assertThrows(DiaryException.class, () -> diaryService.displayDiary(otherUser, 1L, 1L));
-        //then
-        assertEquals(FORBIDDEN_PET_SPACE.getCode(), exception.getCode());
     }
 
     @Test

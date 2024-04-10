@@ -21,7 +21,6 @@ public class DiaryAccessValidator {
 
     @Cacheable(value = "diaryAccessAuthority", key = "{#petId, #userId, #diaryId}")
     public boolean validateAccessDiary(Long petId, String userId, Long diaryId) {
-        log.error("validateAccessDiary");
         Diary diary = diaryRepository.findByIdAndPetIdAndIsDeletedFalse(diaryId, petId)
                 .orElseThrow(() -> new DiaryException(DIARY_NOT_FOUND));
         if (diary.isPublic()) return true;
@@ -32,7 +31,6 @@ public class DiaryAccessValidator {
 
     @Cacheable(value = "diaryAccessAuthority", key = "{#petId, #userId, #diary.id}")
     public boolean validateAccessDiary(Long petId, String userId, Diary diary) {
-        log.error("validateAccessDiary");
         if (diary.isPublic()) return true;
         if (!guardianRepository.existsByUserIdAndPetId(userId, petId))
             throw new DiaryException(FORBIDDEN_PET_SPACE);

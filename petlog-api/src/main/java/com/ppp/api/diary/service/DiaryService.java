@@ -9,6 +9,7 @@ import com.ppp.api.diary.dto.response.DiaryDetailResponse;
 import com.ppp.api.diary.dto.response.DiaryGroupByDateResponse;
 import com.ppp.api.diary.dto.response.DiaryResponse;
 import com.ppp.api.diary.exception.DiaryException;
+import com.ppp.api.diary.validator.DiaryAccessValidator;
 import com.ppp.api.pet.exception.PetException;
 import com.ppp.api.video.exception.ErrorCode;
 import com.ppp.api.video.exception.VideoException;
@@ -57,6 +58,7 @@ public class DiaryService {
     private final ThumbnailService thumbnailService;
     private final ApplicationEventPublisher applicationEventPublisher;
     private final TempVideoRedisRepository tempVideoRedisRepository;
+    private final DiaryAccessValidator diaryAccessValidator;
 
     @Transactional
     public void createDiary(User user, Long petId, DiaryCreateRequest request, List<MultipartFile> images) {
@@ -170,7 +172,7 @@ public class DiaryService {
         Diary diary = diaryRepository.findByIdAndIsDeletedFalse(diaryId)
                 .filter(foundDiary -> Objects.equals(foundDiary.getPet().getId(), petId))
                 .orElseThrow(() -> new DiaryException(DIARY_NOT_FOUND));
-        validateAccessDiary(petId, user, diary);
+        diaryAccessValidator.validateAccessDiary(petId, user.getId(), diary);
         return DiaryDetailResponse.from(diary, user.getId(),
                 diaryCommentRedisService.getDiaryCommentCountByDiaryId(diaryId),
                 diaryRedisService.isLikeExistByDiaryIdAndUserId(diaryId, user.getId()),
@@ -208,12 +210,6 @@ public class DiaryService {
         content.add(DiaryGroupByDateResponse.of(prevDate, sameDaysDiaries));
 
         return new SliceImpl<>(content, diarySlice.getPageable(), diarySlice.hasNext());
-    }
-
-    private void validateAccessDiary(Long petId, User user, Diary diary) {
-        if (diary.isPublic()) return;
-        if (!guardianRepository.existsByUserIdAndPetId(user.getId(), petId))
-            throw new DiaryException(FORBIDDEN_PET_SPACE);
     }
 
     @Transactional
