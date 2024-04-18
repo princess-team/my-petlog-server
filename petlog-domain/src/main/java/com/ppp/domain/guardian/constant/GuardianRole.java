@@ -2,7 +2,7 @@ package com.ppp.domain.guardian.constant;
 
 public enum GuardianRole {
     MEMBER("member"),
-    LEADER   ("leader");
+    LEADER("leader");
 
     private final String value;
 

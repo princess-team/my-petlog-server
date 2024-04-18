@@ -51,11 +51,11 @@ public class GuardianService {
         if (!guardianRepository.existsByUserIdAndPetId(user.getId(), petId))
             throw new GuardianException(ErrorCode.GUARDIAN_NOT_FOUND);
 
-        List<GuardianResponse> guardianResponseList = new ArrayList<>();
-        List<Guardian> guardianList = guardianRepository.findAllByPetIdOrderByCreatedAtDesc(petId);
-        guardianList.stream().map(GuardianResponse::from).forEach(guardianResponseList::add);
+        List<GuardianResponse> guardianResponses = new ArrayList<>();
+        List<Guardian> guardians = guardianRepository.findAllByPetIdOrderByCreatedAtDesc(petId);
+        guardians.stream().map(GuardianResponse::from).forEach(guardianResponses::add);
 
-        return new GuardiansResponse(guardianList.size(), guardianResponseList);
+        return new GuardiansResponse(guardians.size(), guardianResponses);
     }
 
     public void createGuardian(Pet pet, User user, GuardianRole guardianRole) {
