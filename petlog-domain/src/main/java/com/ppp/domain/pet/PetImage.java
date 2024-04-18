@@ -40,4 +40,8 @@ public class PetImage {
     public void addThumbnail(String thumbnailUrl) {
         this.thumbnailUrl = thumbnailUrl;
     }
+
+    public String findThumbnailPath() {
+        return getThumbnailUrl() != null ? getThumbnailUrl() : getUrl();
+    }
 }

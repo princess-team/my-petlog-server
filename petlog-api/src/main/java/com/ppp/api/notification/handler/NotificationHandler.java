@@ -20,6 +20,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
+import java.util.Optional;
+
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -30,9 +32,8 @@ public class NotificationHandler {
     private final SubscriptionLogRepository subscriptionLogRepository;
 
     private String findThumbnailPath(Pet pet) {
-        PetImage petImage = petImageRepository.findByPet(pet).orElse(null);
-        if (petImage != null) return petImage.getThumbnailUrl() != null ? petImage.getThumbnailUrl() : petImage.getUrl();
-        return null;
+        Optional<PetImage> maybePetImage = petImageRepository.findByPet(pet);
+        return maybePetImage.map(PetImage::findThumbnailPath).orElse(null);
     }
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
@@ -81,7 +82,7 @@ public class NotificationHandler {
 
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    public void handleDiaryNotification(SubscribeNotificationEvent event) {
+    public void handleSubscriptionNotification(SubscribeNotificationEvent event) {
         String message = "";
         switch (event.getMessageCode()) {
             case SUBSCRIBE:
