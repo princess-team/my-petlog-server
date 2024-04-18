@@ -9,6 +9,7 @@ import com.ppp.api.diary.dto.response.DiaryReCommentResponse;
 import com.ppp.api.diary.exception.DiaryException;
 import com.ppp.api.diary.validator.DiaryAccessValidator;
 import com.ppp.api.notification.dto.event.DiaryNotificationEvent;
+import com.ppp.api.notification.dto.event.DiaryReCommentNotificationEvent;
 import com.ppp.api.notification.dto.event.DiaryTagNotificationEvent;
 import com.ppp.domain.diary.Diary;
 import com.ppp.domain.diary.DiaryComment;
@@ -26,10 +27,7 @@ import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.ppp.api.diary.exception.ErrorCode.*;
@@ -68,7 +66,7 @@ public class DiaryCommentService {
         if (!sender.getId().equals(diary.getUser().getId()))
             applicationEventPublisher.publishEvent(new DiaryNotificationEvent(MessageCode.DIARY_COMMENT_CREATE, sender, diary));
         if (taggedUserIds != null && !taggedUserIds.isEmpty())
-            applicationEventPublisher.publishEvent(new DiaryTagNotificationEvent(MessageCode.DIARY_TAG, sender, diary, taggedUserIds));
+            applicationEventPublisher.publishEvent(new DiaryTagNotificationEvent(MessageCode.DIARY_TAG, sender, diary.getPet(), taggedUserIds));
     }
 
     private Map<String, String> getTaggedUsersIdNicknameMap(Long petId, List<String> taggedUsers) {
@@ -145,8 +143,20 @@ public class DiaryCommentService {
                 .parent(parentComment)
                 .build());
         applicationEventPublisher.publishEvent(new DiaryReCommentCreatedEvent(savedComment));
-        notifyDiaryComment(parentComment.getDiary(), parentComment.getUser(), request.getTaggedUserIds());
+
+        notifyDiaryReComment(parentComment, user, request.getTaggedUserIds());
+
         return DiaryReCommentResponse.from(savedComment, user.getId());
+    }
+
+    private void notifyDiaryReComment(DiaryComment parentComment, User sender, List<String> taggedUserIds) {
+        User receiver = parentComment.getUser();
+        if (!sender.getId().equals(receiver.getId()))
+            applicationEventPublisher.publishEvent(new DiaryReCommentNotificationEvent(MessageCode.DIARY_RECOMMENT_CREATE, sender, receiver));
+        if (taggedUserIds != null && !taggedUserIds.isEmpty()) {
+            Optional<Diary> maybeDiary = diaryRepository.findByIdAndIsDeletedFalse(parentComment.getDiary().getId());
+            maybeDiary.ifPresent(diary -> applicationEventPublisher.publishEvent(new DiaryTagNotificationEvent(MessageCode.DIARY_TAG, sender, diary.getPet(), taggedUserIds)));
+        }
     }
 
     public List<DiaryReCommentResponse> displayReComments(User user, Long petId, Long diaryId, Long ancestorId) {

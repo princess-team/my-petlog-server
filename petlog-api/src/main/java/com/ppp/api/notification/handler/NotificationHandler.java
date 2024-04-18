@@ -1,9 +1,6 @@
 package com.ppp.api.notification.handler;
 
-import com.ppp.api.notification.dto.event.DiaryNotificationEvent;
-import com.ppp.api.notification.dto.event.DiaryTagNotificationEvent;
-import com.ppp.api.notification.dto.event.InvitationNotificationEvent;
-import com.ppp.api.notification.dto.event.SubscribeNotificationEvent;
+import com.ppp.api.notification.dto.event.*;
 import com.ppp.api.notification.service.NotificationService;
 import com.ppp.domain.diary.DiaryLike;
 import com.ppp.domain.diary.repository.DiaryLikeRepository;
@@ -102,9 +99,21 @@ public class NotificationHandler {
         switch (event.getMessageCode()) {
             case DIARY_TAG:
                 for (String taggedId : event.getTaggedIds()) {
-                    message = String.format("%s의 일기에 %s님이 회원님을 태그했습니다.", event.getDiary().getPet().getName(), event.getActor().getNickname());
+                    message = String.format("%s의 일기에 %s님이 회원님을 태그했습니다.", event.getPet().getName(), event.getActor().getNickname());
                     notificationService.createNotification(Type.DIARY, event.getActor().getId(), taggedId, event.getActor().getThumbnailPath(), message);
                 }
+                break;
+        }
+    }
+
+    @Async
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void handleDiaryReCommentNotification(DiaryReCommentNotificationEvent event) {
+        String message = "";
+        switch (event.getMessageCode()) {
+            case DIARY_RECOMMENT_CREATE:
+                message = String.format("%s님이 댓글을 달았습니다.", event.getActor().getNickname());
+                notificationService.createNotification(Type.DIARY, event.getActor().getId(), event.getReceiver().getId(), event.getActor().getThumbnailPath(), message);
                 break;
         }
     }
