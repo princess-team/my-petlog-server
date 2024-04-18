@@ -69,7 +69,6 @@ public class DiaryCommentService {
             applicationEventPublisher.publishEvent(new DiaryNotificationEvent(MessageCode.DIARY_COMMENT_CREATE, sender, diary));
         if (taggedUserIds != null && !taggedUserIds.isEmpty())
             applicationEventPublisher.publishEvent(new DiaryTagNotificationEvent(MessageCode.DIARY_TAG, sender, diary, taggedUserIds));
-
     }
 
     private Map<String, String> getTaggedUsersIdNicknameMap(Long petId, List<String> taggedUsers) {
@@ -146,6 +145,7 @@ public class DiaryCommentService {
                 .parent(parentComment)
                 .build());
         applicationEventPublisher.publishEvent(new DiaryReCommentCreatedEvent(savedComment));
+        notifyDiaryComment(parentComment.getDiary(), parentComment.getUser(), request.getTaggedUserIds());
         return DiaryReCommentResponse.from(savedComment, user.getId());
     }
 
