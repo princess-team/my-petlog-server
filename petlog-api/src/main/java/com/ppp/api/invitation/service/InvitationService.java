@@ -48,7 +48,7 @@ public class InvitationService {
 
     @Transactional(readOnly = true)
     public List<InvitationResponse> displayInvitations(User user) {
-        List<InvitationResponse> invitationResponseList = new ArrayList<>();
+        List<InvitationResponse> invitationResponses = new ArrayList<>();
         List<Invitation> invitations = invitationRepository.findByInviteeIdAndInviteStatus(user.getId(), InviteStatus.PENDING);
         for (Invitation invitation : invitations) {
             Pet pet = invitation.getPet();
@@ -62,9 +62,9 @@ public class InvitationService {
                     .petName(pet.getName())
                     .petImageUrl(petImage.getUrl())
                     .build();
-            invitationResponseList.add(invitationResponse);
+            invitationResponses.add(invitationResponse);
         }
-        return invitationResponseList;
+        return invitationResponses;
     }
 
     @Transactional
@@ -100,12 +100,12 @@ public class InvitationService {
     }
 
     public List<MyInvitationResponse> displayMyInvitations(Long petId, User user) {
-        List<MyInvitationDto> myInvitationDtoResponseList = invitationQuerydslRepository.findMyInvitationByInviterId(petId, user.getId());
-        List<MyInvitationResponse> myInvitationResponseList = new ArrayList<>();
-        myInvitationDtoResponseList.forEach(myInvitationDto ->
-            myInvitationResponseList.add(MyInvitationResponse.from(myInvitationDto))
+        List<MyInvitationDto> myInvitationDtoResponses = invitationQuerydslRepository.findMyInvitationByInviterId(petId, user.getId());
+        List<MyInvitationResponse> myInvitationResponses = new ArrayList<>();
+        myInvitationDtoResponses.forEach(myInvitationDto ->
+            myInvitationResponses.add(MyInvitationResponse.from(myInvitationDto))
         );
-        return myInvitationResponseList;
+        return myInvitationResponses;
     }
 
     @Transactional

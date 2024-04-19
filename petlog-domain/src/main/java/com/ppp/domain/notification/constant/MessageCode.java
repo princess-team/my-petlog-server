@@ -13,6 +13,7 @@ public enum MessageCode {
 
 
     DIARY_COMMENT_CREATE("댓글을 달았습니다."),
+    DIARY_RECOMMENT_CREATE("대댓글을 달았습니다."),
     DIARY_TAG("태그를 했습니다."),
     DIARY_LIKE("일기를 좋아합니다."),
 
