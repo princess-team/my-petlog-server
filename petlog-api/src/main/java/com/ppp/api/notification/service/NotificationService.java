@@ -10,7 +10,6 @@ import com.ppp.domain.notification.repository.NotificationRepository;
 import com.ppp.domain.user.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
@@ -21,15 +20,12 @@ public class NotificationService {
     private final NotificationQuerydslRepository notificationQuerydslRepository;
 
     public void createNotification(Type type, String actorId, String receiverId, String thumbnailPath, String message) {
-
         Notification notification = Notification.of(type, actorId, receiverId, thumbnailPath, message);
         notificationRepository.save(notification);
     }
 
-    public Page<NotificationResponse> displayNotifications(User user, int page, int size) {
-        Pageable pageable = PageRequest.of(page, size);
+    public Page<NotificationResponse> displayNotifications(User user, Pageable pageable) {
         Page<NotificationDto> notificationDtoPage = notificationQuerydslRepository.findAllByReceiverId(user, pageable);
-
         return toResponsePage(notificationDtoPage);
     }
 

@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -30,9 +31,8 @@ public class NotificationController {
     @GetMapping("/v1/notifications")
     public Page<NotificationResponse> displayNotifications(
             @AuthenticationPrincipal PrincipalDetails principalDetails,
-            @RequestParam(required = false, defaultValue = "0") int page,
-            @RequestParam(required = false, defaultValue = "20") int size) {
-        return notificationService.displayNotifications(principalDetails.getUser(), page, size);
+            Pageable pageable) {
+        return notificationService.displayNotifications(principalDetails.getUser(), pageable);
     }
 
     @Operation(summary = "모든 알림 읽음 처리")
