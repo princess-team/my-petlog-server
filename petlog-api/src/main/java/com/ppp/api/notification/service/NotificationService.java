@@ -25,7 +25,7 @@ public class NotificationService {
     }
 
     public Page<NotificationResponse> displayNotifications(User user, Pageable pageable) {
-        Page<NotificationDto> notificationDtoPage = notificationQuerydslRepository.findAllByReceiverId(user, pageable);
+        Page<NotificationDto> notificationDtoPage = notificationQuerydslRepository.findAllPageByReceiverId(user, pageable);
         return toResponsePage(notificationDtoPage);
     }
 
