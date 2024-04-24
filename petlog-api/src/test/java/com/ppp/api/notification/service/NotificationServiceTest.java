@@ -52,7 +52,7 @@ class NotificationServiceTest {
     void displayNotifications_returnPage() {
         //give
         int page = 0;
-        int size = 10;
+        int size = 2;
 
         Pageable pageable = PageRequest.of(page, size);
         List<NotificationDto> notificationDtoList = new ArrayList<>();
@@ -63,13 +63,20 @@ class NotificationServiceTest {
                 .isRead(false)
                 .createdAt(LocalDateTime.now())
                 .build());
+        notificationDtoList.add(NotificationDto.builder()
+                .id(2L)
+                .type(Type.INVITATION)
+                .message("message")
+                .isRead(false)
+                .createdAt(LocalDateTime.now())
+                .build());
         Page<NotificationDto> notificationDtoPage = new PageImpl<>(notificationDtoList, pageable, notificationDtoList.size());
 
         //when
-        when(notificationQuerydslRepository.findAllByReceiverId(user, pageable)).thenReturn(notificationDtoPage);
-        Page<NotificationResponse> notificationResponsePage = notificationService.displayNotifications(user, page, size);
+        when(notificationQuerydslRepository.findAllPageByReceiverId(user, pageable)).thenReturn(notificationDtoPage);
+        Page<NotificationResponse> notificationResponsePage = notificationService.displayNotifications(user, pageable);
 
         //then
-        assertEquals(notificationResponsePage.getSize(), notificationDtoPage.getSize());
+        assertEquals(notificationResponsePage.getSize(), notificationResponsePage.getContent().size());
     }
 }

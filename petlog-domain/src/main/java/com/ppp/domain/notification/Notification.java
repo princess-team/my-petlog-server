@@ -7,7 +7,7 @@ import lombok.*;
 
 @Table(name = "notifications",
 indexes = {
-        @Index(name = "idx_receiver", columnList = "receiverId")
+        @Index(name = "idx_createdAt", columnList = "createdAt desc")
 })
 @Getter
 @Entity

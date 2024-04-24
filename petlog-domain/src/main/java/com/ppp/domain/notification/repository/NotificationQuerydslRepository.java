@@ -26,25 +26,45 @@ import static com.ppp.domain.user.QUser.user;
 public class NotificationQuerydslRepository {
     private final JPAQueryFactory queryFactory;
 
-    public Page<NotificationDto> findAllByReceiverId(User receiver, Pageable pageable) {
+    public Page<NotificationDto> findAllPageByReceiverId(User receiver, Pageable pageable) {
+        List<NotificationDto> notificationDtos = getNotificationDtos(receiver, pageable);
+        Long count = getCount(receiver);
+
+        return new PageImpl<>(notificationDtos, pageable, count);
+    }
+
+    private List<NotificationDto> getNotificationDtos(User receiver, Pageable pageable) {
         LocalDateTime thirtyDaysAgo = LocalDateTime.now().minusDays(30);
 
-        List<NotificationDto> notificationDtoList = queryFactory.select(Projections.fields(
+        return queryFactory.select(Projections.fields(
                         NotificationDto.class,
                         notification.id,
                         notification.type,
                         notification.message,
                         notification.isRead,
                         notification.createdAt,
-                        user.thumbnailPath.coalesce(user.profilePath).as("thumbnailPath")
+                        notification.thumbnailPath
                 ))
                 .from(notification)
                 .where(receiverContains(receiver)
-                    .and(notification.createdAt.goe(thirtyDaysAgo)))
+                        .and(notification.createdAt.goe(thirtyDaysAgo)))
                 .innerJoin(user).on(notification.actorId.eq(user.id))
                 .orderBy(createOrderSpecifier())
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
                 .fetch();
-        return new PageImpl<>(notificationDtoList, pageable, notificationDtoList.size());
+    }
+
+    private Long getCount(User receiver) {
+        LocalDateTime thirtyDaysAgo = LocalDateTime.now().minusDays(30);
+
+        return queryFactory
+                .select(notification.count())
+                .from(notification)
+                .where(receiverContains(receiver)
+                        .and(notification.createdAt.goe(thirtyDaysAgo)))
+                .innerJoin(user).on(notification.actorId.eq(user.id))
+                .fetchOne();
     }
 
     private BooleanExpression receiverContains(User receiver) {
