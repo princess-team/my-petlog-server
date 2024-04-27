@@ -206,4 +206,39 @@ class DiaryDraftServiceTest {
     }
 
 
+    @Test
+    @DisplayName("임시 저장 일기 삭제 성공")
+    void deleteDiaryDraft_success() {
+        //given
+        DiaryDraft diaryDraft = DiaryDraft.builder()
+                .title("우리 고양이")
+                .content("정말 귀엽다")
+                .petId(1L)
+                .date(LocalDate.EPOCH)
+                .userId("randomstring")
+                .isPublic(false)
+                .images(List.of("DIARY/2024-01-31/805496ad51ee46ab94394c5635a2abd820240131183104956.jpg",
+                        "DIARY/2024-01-31/805496ad51ee46ab94394c5635a2abd820240131183104956.jpg"))
+                .videos(new ArrayList<>())
+                .build();
+        given(diaryDraftRedisRepository.findByPetIdAndUserId(anyLong(), anyString()))
+                .willReturn(Optional.of(diaryDraft));
+        //when
+        diaryDraftService.deleteDiaryDraft(1L, user);
+        //then
+        verify(diaryDraftRedisRepository, times(1)).delete(any());
+    }
+
+    @Test
+    @DisplayName("임시 저장 일기 삭제 실패-DIARY_DRAFT_NOT_FOUND")
+    void deleteDiaryDraft_fail_DIARY_DRAFT_NOT_FOUND() {
+        //given
+        given(diaryDraftRedisRepository.findByPetIdAndUserId(anyLong(), anyString()))
+                .willReturn(Optional.empty());
+        //when
+        DiaryException exception = assertThrows(DiaryException.class, () -> diaryDraftService.deleteDiaryDraft(1L, user));
+        //then
+        assertEquals(DIARY_DRAFT_NOT_FOUND.getCode(), exception.getCode());
+    }
+
 }
