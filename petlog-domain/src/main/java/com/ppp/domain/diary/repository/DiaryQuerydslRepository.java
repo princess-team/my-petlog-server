@@ -48,10 +48,10 @@ public class DiaryQuerydslRepository {
 
     public List<PetDiaryDto> findRandomPetsDiaries(Set<Long> blockedPetIds, Pageable pageable) {
         return jpaQueryFactory.from(diary)
-                .leftJoin(diary.diaryMedias, diaryMedia).fetchJoin()
+                .leftJoin(diary.diaryMedias, diaryMedia)
                 .leftJoin(petImage).on(petImage.pet.id.eq(diary.pet.id))
                 .where(diary.pet.id.notIn(blockedPetIds), diary.isPublic.eq(true), diary.isDeleted.eq(false))
-                .offset(getRandomSelectedPetsDiaryOffset())
+                .offset((long) Math.ceil(getRandomSelectedPetsDiaryOffset() * 0.75))
                 .limit(pageable.getPageSize())
                 .fetchJoin()
                 .transform(
