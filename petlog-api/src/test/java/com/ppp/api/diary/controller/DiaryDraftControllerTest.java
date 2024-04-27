@@ -97,4 +97,18 @@ class DiaryDraftControllerTest {
         //then
     }
 
+    @Test
+    @WithMockCustomUser
+    @DisplayName("임시 저장 일기 삭제 성공")
+    void deleteDiaryDraft_success() throws Exception {
+        //given
+        //when
+        mockMvc.perform(get("/api/v1/pets/{petId}/diaries/drafts", 1L)
+                        .header("Authorization", TOKEN)
+                        .contentType(MediaType.APPLICATION_JSON_VALUE)
+                ).andDo(print())
+                .andExpect(status().isOk());
+        //then
+    }
+
 }

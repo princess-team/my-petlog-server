@@ -1,5 +1,6 @@
 package com.ppp.api.diary.service;
 
+import com.ppp.api.diary.dto.event.DiaryDraftDeletedEvent;
 import com.ppp.api.diary.dto.event.DiaryDraftUpdatedEvent;
 import com.ppp.api.diary.dto.request.DiaryDraftCreateRequest;
 import com.ppp.api.diary.dto.response.DiaryDraftCheckResponse;
@@ -24,7 +25,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-import static com.ppp.api.diary.exception.ErrorCode.*;
+import static com.ppp.api.diary.exception.ErrorCode.DIARY_DRAFT_NOT_FOUND;
 
 @RequiredArgsConstructor
 @Service
@@ -79,6 +80,13 @@ public class DiaryDraftService {
         return DiaryDraftResponse.from(
                 diaryDraftRedisRepository.findByPetIdAndUserId(petId, user.getId())
                         .orElseThrow(() -> new DiaryException(DIARY_DRAFT_NOT_FOUND)));
+    }
+
+    public void deleteDiaryDraft(Long petId, User user) {
+        DiaryDraft diaryDraftToBeDeleted = diaryDraftRedisRepository.findByPetIdAndUserId(petId, user.getId())
+                .orElseThrow(() -> new DiaryException(DIARY_DRAFT_NOT_FOUND));
+        diaryDraftRedisRepository.delete(diaryDraftToBeDeleted);
+        applicationEventPublisher.publishEvent(new DiaryDraftDeletedEvent(diaryDraftToBeDeleted.getMedias()));
     }
 
 }

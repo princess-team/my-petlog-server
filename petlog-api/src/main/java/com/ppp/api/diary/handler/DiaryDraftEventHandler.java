@@ -1,5 +1,6 @@
 package com.ppp.api.diary.handler;
 
+import com.ppp.api.diary.dto.event.DiaryDraftDeletedEvent;
 import com.ppp.api.diary.dto.event.DiaryDraftUpdatedEvent;
 import com.ppp.common.service.FileStorageManageService;
 import lombok.RequiredArgsConstructor;
@@ -16,7 +17,13 @@ public class DiaryDraftEventHandler {
 
     @Async
     @EventListener
-    public void handleDiaryCreatedEvent(DiaryDraftUpdatedEvent event) {
+    public void handleDiaryUpdatedEvent(DiaryDraftUpdatedEvent event) {
+        fileStorageManageService.deleteImages(event.getDeletedPaths());
+    }
+
+    @Async
+    @EventListener
+    public void handleDiaryDeletedEvent(DiaryDraftDeletedEvent event) {
         fileStorageManageService.deleteImages(event.getDeletedPaths());
     }
 

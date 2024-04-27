@@ -69,4 +69,16 @@ public class DiaryDraftController {
                                                                   @AuthenticationPrincipal PrincipalDetails principalDetails) {
         return ResponseEntity.ok(diaryDraftService.retrieveDiaryDraft(petId, principalDetails.getUser()));
     }
+
+    @Operation(summary = "임시 저장 일기 삭제")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", content = {@Content(schema = @Schema())}),
+            @ApiResponse(responseCode = "404", description = "임시 저장 일기 없음", content = {@Content(schema = @Schema(implementation = ExceptionResponse.class))})
+    })
+    @DeleteMapping
+    private ResponseEntity<Void> deleteDiaryDraft(@PathVariable Long petId,
+                                                  @AuthenticationPrincipal PrincipalDetails principalDetails) {
+        diaryDraftService.deleteDiaryDraft(petId, principalDetails.getUser());
+        return ResponseEntity.ok().build();
+    }
 }

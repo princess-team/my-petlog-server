@@ -73,8 +73,9 @@ public class DiaryDraft implements Serializable {
     }
 
     public List<String> getMedias() {
-        getImages().addAll(getVideos());
-        return images;
+        List<String> medias = new ArrayList<>(getImages());
+        medias.addAll(getVideos());
+        return medias;
     }
 
     public List<String> getImages() {
