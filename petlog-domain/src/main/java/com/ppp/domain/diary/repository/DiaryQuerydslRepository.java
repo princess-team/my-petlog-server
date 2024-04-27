@@ -2,7 +2,6 @@ package com.ppp.domain.diary.repository;
 
 import com.ppp.domain.diary.dto.DiaryMediaDto;
 import com.ppp.domain.diary.dto.PetDiaryDto;
-import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
@@ -10,54 +9,56 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ThreadLocalRandom;
 
 import static com.ppp.domain.diary.QDiary.diary;
 import static com.ppp.domain.diary.QDiaryMedia.diaryMedia;
 import static com.ppp.domain.pet.QPetImage.petImage;
 import static com.querydsl.core.group.GroupBy.groupBy;
-import static com.querydsl.core.group.GroupBy.set;
+import static com.querydsl.core.group.GroupBy.list;
 import static com.querydsl.core.types.Projections.constructor;
 
 @RequiredArgsConstructor
 @Repository
 public class DiaryQuerydslRepository {
     private final JPAQueryFactory jpaQueryFactory;
+    private final DiaryRepository diaryRepository;
+
+    private Long getRandomSelectedPetsDiaryOffset() {
+        int totalDiaryCount = diaryRepository.countByIsPublicTrueAndIsDeletedFalse();
+        return ThreadLocalRandom.current().nextLong(-1, totalDiaryCount) + 1;
+    }
 
     public List<PetDiaryDto> findRandomPetsDiaries(Pageable pageable) {
         return jpaQueryFactory.from(diary)
                 .leftJoin(diary.diaryMedias, diaryMedia)
                 .leftJoin(petImage).on(petImage.pet.id.eq(diary.pet.id))
-                .offset(pageable.getOffset())
+                .where(diary.isPublic.eq(true), diary.isDeleted.eq(false))
+                .offset(getRandomSelectedPetsDiaryOffset())
                 .limit(pageable.getPageSize())
-                .where(diary.isPublic.eq(true),
-                        diary.isDeleted.eq(false))
-                .orderBy(Expressions.numberTemplate(Double.class, "function('rand')").asc())
                 .fetchJoin()
                 .transform(
                         groupBy(diary.id)
                                 .list(constructor(PetDiaryDto.class,
                                         diary.id, diary.pet.id, diary.pet.name,
-                                        set(constructor(DiaryMediaDto.class, diaryMedia.id, diaryMedia.type, diaryMedia.path)),
+                                        list(constructor(DiaryMediaDto.class, diaryMedia.id, diaryMedia.type, diaryMedia.path)),
                                         petImage.url, diary.content, diary.title, diary.createdAt))
                 );
     }
 
     public List<PetDiaryDto> findRandomPetsDiaries(Set<Long> blockedPetIds, Pageable pageable) {
         return jpaQueryFactory.from(diary)
-                .leftJoin(diary.diaryMedias, diaryMedia)
+                .leftJoin(diary.diaryMedias, diaryMedia).fetchJoin()
                 .leftJoin(petImage).on(petImage.pet.id.eq(diary.pet.id))
-                .offset(pageable.getOffset())
+                .where(diary.pet.id.notIn(blockedPetIds), diary.isPublic.eq(true), diary.isDeleted.eq(false))
+                .offset(getRandomSelectedPetsDiaryOffset())
                 .limit(pageable.getPageSize())
-                .where(diary.pet.id.notIn(blockedPetIds),
-                        diary.isPublic.eq(true),
-                        diary.isDeleted.eq(false))
-                .orderBy(Expressions.numberTemplate(Double.class, "function('rand')").asc())
                 .fetchJoin()
                 .transform(
                         groupBy(diary.id)
                                 .list(constructor(PetDiaryDto.class,
                                         diary.id, diary.pet.id, diary.pet.name,
-                                        set(constructor(DiaryMediaDto.class, diaryMedia.id, diaryMedia.type, diaryMedia.path)),
+                                        list(constructor(DiaryMediaDto.class, diaryMedia.id, diaryMedia.type, diaryMedia.path)),
                                         petImage.url, diary.content, diary.title, diary.createdAt))
                 );
     }
@@ -78,7 +79,7 @@ public class DiaryQuerydslRepository {
                         groupBy(diary.id)
                                 .list(constructor(PetDiaryDto.class,
                                         diary.id, diary.pet.id, diary.pet.name,
-                                        set(constructor(DiaryMediaDto.class, diaryMedia.id, diaryMedia.type, diaryMedia.path)),
+                                        list(constructor(DiaryMediaDto.class, diaryMedia.id, diaryMedia.type, diaryMedia.path)),
                                         petImage.url, diary.content, diary.title, diary.createdAt))
                 );
     }

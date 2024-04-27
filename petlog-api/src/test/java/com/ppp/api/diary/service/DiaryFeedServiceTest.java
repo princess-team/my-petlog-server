@@ -75,14 +75,14 @@ class DiaryFeedServiceTest {
                         .build());
         given(diaryQuerydslRepository.findSubscribedPetsDiariesBySubscription(anySet(), any()))
                 .willReturn(List.of(
-                        new PetDiaryDto(5L, 3L, "마루", new HashSet<>(), "/PET/profilepath", "나 사람됐다 짱이지", "마루는 네살", LocalDateTime.MIN)
+                        new PetDiaryDto(5L, 3L, "마루", new ArrayList<>(), "/PET/profilepath", "나 사람됐다 짱이지", "마루는 네살", LocalDateTime.MIN)
                 ));
         given(diaryCommentRedisService.getDiaryCommentCountByDiaryId(anyLong())).willReturn(0);
         given(diaryRedisService.isLikeExistByDiaryIdAndUserId(anyLong(), anyString())).willReturn(true);
         given(diaryRedisService.getLikeCountByDiaryId(anyLong())).willReturn(1);
         given(diaryQuerydslRepository.findRandomPetsDiaries(anySet(), any()))
                 .willReturn(List.of(
-                        new PetDiaryDto(5L, 3L, "마루", new HashSet<>(), "/PET/profilepath", "나 사람됐다 짱이지", "마루는 네살", LocalDateTime.MIN)
+                        new PetDiaryDto(5L, 3L, "마루", new ArrayList<>(), "/PET/profilepath", "나 사람됐다 짱이지", "마루는 네살", LocalDateTime.MIN)
                 ));
         //when
         Set<DiaryFeedResponse> responses = diaryFeedService.retrieveDiaryFeed(Optional.of(new PrincipalDetails(userA)), 0, 10);

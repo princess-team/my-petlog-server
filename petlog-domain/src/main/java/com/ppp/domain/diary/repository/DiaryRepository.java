@@ -1,6 +1,7 @@
 package com.ppp.domain.diary.repository;
 
 import com.ppp.domain.diary.Diary;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -12,6 +13,8 @@ import java.util.Set;
 
 @Repository
 public interface DiaryRepository extends JpaRepository<Diary, Long> {
+    @Cacheable(value = "totalPublicDiaryCount")
+    int countByIsPublicTrueAndIsDeletedFalse();
     @EntityGraph(attributePaths = {"user", "pet", "diaryMedias"}, type = EntityGraph.EntityGraphType.FETCH)
     Optional<Diary> findByIdAndIsDeletedFalse(Long id);
 

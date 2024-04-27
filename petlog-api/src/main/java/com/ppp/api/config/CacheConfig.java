@@ -58,6 +58,8 @@ public class CacheConfig {
                 defaultRedisCacheConfiguration().entryTtl(Duration.ofSeconds(70)));
         cacheConfigurationMap.put(SUBSCRIPTION_INFO.getValue(),
                 defaultRedisCacheConfiguration().entryTtl(Duration.ofMinutes(5)));
+        cacheConfigurationMap.put(TOTAL_PUBLIC_DIARY_COUNT.getValue(),
+                defaultRedisCacheConfiguration().entryTtl(Duration.ofMinutes(30)));
         return cacheConfigurationMap;
     }
 
