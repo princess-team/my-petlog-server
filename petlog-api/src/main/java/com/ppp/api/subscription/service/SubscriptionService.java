@@ -54,6 +54,7 @@ public class SubscriptionService {
                                     .build());
                             applicationEventPublisher.publishEvent(new SubscribeNotificationEvent(MessageCode.SUBSCRIBE, user, pet.getUser().getId(), pet));
                         });
+        deleteCachedSubscriptionInfo(user.getId());
     }
 
     public List<SubscribedPetResponse> displayMySubscribedPets(User user) {
