@@ -8,7 +8,9 @@ import com.ppp.api.user.exception.ErrorCode;
 import com.ppp.api.user.exception.NotFoundUserException;
 import com.ppp.api.user.exception.UserException;
 import com.ppp.common.service.FileStorageManageService;
+import com.ppp.common.service.ThumbnailService;
 import com.ppp.domain.common.constant.Domain;
+import com.ppp.domain.common.constant.FileType;
 import com.ppp.domain.user.User;
 import com.ppp.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +29,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final ApplicationEventPublisher applicationEventPublisher;
     private final AuthService authService;
+    private final ThumbnailService thumbnailService;
 
     public boolean existsByNickname(String nickname) {
         return userRepository.existsByNickname(nickname);
@@ -45,14 +48,28 @@ public class UserService {
         saveProfileImage(userFromDB, profileImage);
     }
 
-    public void saveProfileImage(User user, MultipartFile profileImage) {
+    private void saveProfileImage(User user, MultipartFile profileImage) {
         if (profileImage != null && !profileImage.isEmpty()) {
+            fileStorageManageService.deleteImage(user.getProfilePath());
             String savedPath = uploadImageToS3(profileImage);
             user.updateProfilePath(savedPath);
+            saveProfileThumbnail(user, savedPath);
         } else {
             if (user.getProfilePath() != null && !user.getProfilePath().isEmpty())
                 fileStorageManageService.deleteImage(user.getProfilePath());
             user.deleteProfilePath();
+        }
+    }
+
+    private void saveProfileThumbnail(User user, String savedPath) {
+        try {
+            if (user.getThumbnailPath() != null) {
+                fileStorageManageService.deleteImage(user.getThumbnailPath());
+            }
+            String thumbnailPath = thumbnailService.uploadThumbnailFromStorageFile(savedPath, FileType.IMAGE, Domain.USER);
+            user.updateThumbnailPath(thumbnailPath);
+        } catch (Exception e) {
+            log.warn("{} is thumbnail error", user.getId());
         }
     }
 

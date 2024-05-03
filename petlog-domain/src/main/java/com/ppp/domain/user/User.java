@@ -67,6 +67,10 @@ public class User extends BaseTimeEntity {
         this.profilePath = path;
     }
 
+    public void updateThumbnailPath(String path) {
+        this.thumbnailPath = path;
+    }
+
     public void deleteProfilePath() {
         this.profilePath = null;
     }
