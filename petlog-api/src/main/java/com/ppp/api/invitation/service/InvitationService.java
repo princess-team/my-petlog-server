@@ -7,7 +7,7 @@ import com.ppp.api.invitation.dto.response.InvitationResponse;
 import com.ppp.api.invitation.dto.response.MyInvitationResponse;
 import com.ppp.api.invitation.exception.ErrorCode;
 import com.ppp.api.invitation.exception.InvitationException;
-import com.ppp.api.notification.dto.event.InvitationNotificationEvent;
+import com.ppp.api.notification.dto.event.InvitedNotificationEvent;
 import com.ppp.api.pet.exception.PetException;
 import com.ppp.common.util.TimeUtil;
 import com.ppp.domain.guardian.constant.GuardianRole;
@@ -74,7 +74,7 @@ public class InvitationService {
         guardianService.createGuardian(pet, user, GuardianRole.MEMBER);
 
         applicationEventPublisher.publishEvent(
-                new InvitationNotificationEvent(MessageCode.INVITATION_ACCEPT, user, invitation.getInviterId(), pet));
+                new InvitedNotificationEvent(MessageCode.INVITATION_ACCEPT, user, invitation.getInviterId(), pet));
     }
 
     @Transactional
@@ -83,11 +83,11 @@ public class InvitationService {
         Pet pet = invitation.getPet();
 
         applicationEventPublisher.publishEvent(
-                new InvitationNotificationEvent(MessageCode.INVITATION_REJECT, user, invitation.getInviterId(), pet));
+                new InvitedNotificationEvent(MessageCode.INVITATION_REJECT, user, invitation.getInviterId(), pet));
     }
 
     private Invitation updateInvitationByInvitee(Long invitationId, User user, InviteStatus fromStatus, InviteStatus toStatus) {
-        Invitation invitation = invitationRepository.findByIdAndInviteStatusAndInviteeId(invitationId, fromStatus, user.getId())
+        Invitation invitation = invitationRepository.findInvitaionAndPetByIdAndInviteStatusAndInviteeId(invitationId, fromStatus, user.getId())
                 .orElseThrow(() -> new InvitationException(ErrorCode.INVITATION_NOT_FOUND));
         invitation.updateInviteStatus(toStatus);
         return invitation;

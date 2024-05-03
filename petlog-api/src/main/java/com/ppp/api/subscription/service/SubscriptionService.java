@@ -1,6 +1,6 @@
 package com.ppp.api.subscription.service;
 
-import com.ppp.api.notification.dto.event.SubscribeNotificationEvent;
+import com.ppp.api.notification.dto.event.SubscribedNotificationEvent;
 import com.ppp.api.pet.exception.ErrorCode;
 import com.ppp.api.pet.exception.PetException;
 import com.ppp.api.subscription.dto.response.SubscribedPetResponse;
@@ -52,7 +52,7 @@ public class SubscriptionService {
                                     .status(Status.ACTIVE)
                                     .pet(pet)
                                     .build());
-                            applicationEventPublisher.publishEvent(new SubscribeNotificationEvent(MessageCode.SUBSCRIBE, user, pet.getUser().getId(), pet));
+                            applicationEventPublisher.publishEvent(new SubscribedNotificationEvent(MessageCode.SUBSCRIBE, user, pet.getUser().getId(), pet));
                         });
         deleteCachedSubscriptionInfo(user.getId());
     }
