@@ -8,7 +8,7 @@ import lombok.Getter;
 
 @Getter
 @AllArgsConstructor
-public class SubscribeNotificationEvent {
+public class InvitedNotificationEvent {
     private MessageCode messageCode;
     private User actor;
     private String receiverId;

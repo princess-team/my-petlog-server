@@ -32,9 +32,10 @@ public class NotificationHandler {
         Optional<PetImage> maybePetImage = petImageRepository.findByPet(pet);
         return maybePetImage.map(PetImage::findThumbnailPath).orElse(null);
     }
+
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    public void handleInvitationNotification(InvitationNotificationEvent event) {
+    public void handleInvitationNotification(InvitedNotificationEvent event) {
         String message = "";
         String thumbnailPath = "";
         switch (event.getMessageCode()) {
@@ -79,7 +80,7 @@ public class NotificationHandler {
 
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    public void handleSubscriptionNotification(SubscribeNotificationEvent event) {
+    public void handleSubscriptionNotification(SubscribedNotificationEvent event) {
         String message = "";
         switch (event.getMessageCode()) {
             case SUBSCRIBE:

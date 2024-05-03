@@ -5,7 +5,7 @@ import com.ppp.api.guardian.dto.response.GuardianResponse;
 import com.ppp.api.guardian.dto.response.GuardiansResponse;
 import com.ppp.api.guardian.exception.ErrorCode;
 import com.ppp.api.guardian.exception.GuardianException;
-import com.ppp.api.notification.dto.event.InvitationNotificationEvent;
+import com.ppp.api.notification.dto.event.InvitedNotificationEvent;
 import com.ppp.api.pet.exception.PetException;
 import com.ppp.api.user.dto.response.UserResponse;
 import com.ppp.common.service.CacheManageService;
@@ -81,7 +81,7 @@ public class GuardianService {
             guardianRepository.deleteById(requestedGuardian.getId());
 
             applicationEventPublisher.publishEvent(
-                    new InvitationNotificationEvent(MessageCode.INVITATION_GUARDIAN_KICK, user, requestedGuardian.getUser().getId(), requestedGuardian.getPet()));
+                    new InvitedNotificationEvent(MessageCode.INVITATION_GUARDIAN_KICK, user, requestedGuardian.getUser().getId(), requestedGuardian.getPet()));
         }
         deleteCachedGuardianAuthority(requestedGuardian.getUser().getId(), petId);
     }
@@ -120,7 +120,7 @@ public class GuardianService {
         invitationRepository.save(invitation);
 
         applicationEventPublisher.publishEvent(
-                new InvitationNotificationEvent(MessageCode.INVITATION_REQUEST, inviterUser, invitation.getInviteeId(), invitation.getPet()));
+                new InvitedNotificationEvent(MessageCode.INVITATION_REQUEST, inviterUser, invitation.getInviteeId(), invitation.getPet()));
     }
 
     private void validateInvitation(Long petId, User inviteeUser, User inviterUser) {
@@ -128,8 +128,7 @@ public class GuardianService {
             throw new GuardianException(ErrorCode.NOT_INVITED_EMAIL);
 
         validateIsGuardian(petId, inviteeUser.getId());
-
-        checkIfAlreadyInvited(inviteeUser, petId);
+        validateIfAlreadyInvited(inviteeUser, petId);
     }
 
     public void validateIsGuardian(Long petId, String userId) {
@@ -137,7 +136,7 @@ public class GuardianService {
             throw new GuardianException(ErrorCode.NOT_INVITED_ALREADY_GUARDIAN);
     }
 
-    private void checkIfAlreadyInvited(User inviteeUser, Long petId) {
+    private void validateIfAlreadyInvited(User inviteeUser, Long petId) {
         Optional<Invitation> invitationOfInvitee = invitationRepository.findFirstByInviteeIdAndPetIdOrderByCreatedAtDesc(inviteeUser.getId(), petId);
         invitationOfInvitee.ifPresent(invitation -> {
             if (InviteStatus.PENDING.name().equals(invitation.getInviteStatus().name()))
