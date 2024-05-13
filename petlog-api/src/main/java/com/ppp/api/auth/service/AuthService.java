@@ -14,6 +14,7 @@ import com.ppp.common.security.jwt.JwtTokenProvider;
 import com.ppp.domain.email.EmailVerification;
 import com.ppp.domain.email.repository.EmailVerificationRepository;
 import com.ppp.domain.user.User;
+import com.ppp.domain.user.constant.LoginType;
 import com.ppp.domain.user.constant.Role;
 import com.ppp.domain.user.repository.UserRepository;
 import jakarta.servlet.http.Cookie;
@@ -58,7 +59,6 @@ public class AuthService {
         String encPwd = encodePassword(rawPwd);
 
         User newUser = User.createUserByEmail(registerRequest.getEmail(), encPwd, Role.USER);
-
         userRepository.save(newUser);
     }
 
@@ -84,8 +84,10 @@ public class AuthService {
 
     public AuthenticationResponse socialLogin(SocialRequest socialRequest) {
         User user = userRepository.findByEmail(socialRequest.getEmail())
-                .orElseGet(() -> userRepository.save(User.createUserByEmail(socialRequest.getEmail(), Role.USER))
+                .orElseGet(() -> userRepository.save(User.createUserBySocial(socialRequest.getEmail(), Role.USER, LoginType.valueOf(socialRequest.getLoginType().toUpperCase())))
         );
+
+        validateIfEmailLoginType(user, LoginType.valueOf(socialRequest.getLoginType().toUpperCase()));
 
         String accessToken = jwtTokenProvider.generateAccessToken(user);
         String refreshToken = jwtTokenProvider.generateRefreshToken(user);
@@ -95,6 +97,11 @@ public class AuthService {
                 .accessToken(accessToken)
                 .refreshToken(refreshToken)
                 .build();
+    }
+
+    private void validateIfEmailLoginType(User user, LoginType loginType) {
+        if (user.getLoginType() != loginType)
+            throw new AuthException(ErrorCode.EXISTS_EMAIL);
     }
 
     public AuthenticationResponse regenerateToken(String refreshToken) {

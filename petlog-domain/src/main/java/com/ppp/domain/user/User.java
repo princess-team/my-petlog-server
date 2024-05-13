@@ -4,6 +4,7 @@ package com.ppp.domain.user;
 import com.ppp.domain.common.BaseTimeEntity;
 import com.ppp.domain.common.util.GenerationUtil;
 import com.ppp.domain.pet.Pet;
+import com.ppp.domain.user.constant.LoginType;
 import com.ppp.domain.user.constant.Role;
 import jakarta.persistence.*;
 import lombok.*;
@@ -43,6 +44,8 @@ public class User extends BaseTimeEntity {
 
     private String thumbnailPath;
 
+    @Enumerated(EnumType.STRING)
+    private LoginType loginType;
 
     public static User createUserByEmail(String email, String password, Role role) {
         return User.builder()
@@ -51,15 +54,17 @@ public class User extends BaseTimeEntity {
                 .password(password)
                 .role(role)
                 .isDeleted(false)
+                .loginType(LoginType.EMAIL)
                 .build();
     }
 
-    public static User createUserByEmail(String email, Role role) {
+    public static User createUserBySocial(String email, Role role, LoginType loginType) {
         return User.builder()
                 .id(GenerationUtil.generateIdFromEmail(email))
                 .email(email)
                 .role(role)
                 .isDeleted(false)
+                .loginType(loginType)
                 .build();
     }
 
