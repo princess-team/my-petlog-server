@@ -100,7 +100,7 @@ public class AuthController {
     })
     @PostMapping("/emails/verification-requests")
     public ResponseEntity<Void> sendMessage(@Valid @RequestBody EmailRequest emailRequest) {
-        authService.sendEmailForm(emailRequest.getEmail());
+        authService.sendEmailCodeForm(emailRequest.getEmail());
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
