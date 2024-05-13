@@ -7,6 +7,7 @@ import com.ppp.api.auth.dto.request.SocialRequest;
 import com.ppp.api.auth.dto.response.AuthenticationResponse;
 import com.ppp.api.auth.exception.AuthException;
 import com.ppp.api.auth.exception.ErrorCode;
+import com.ppp.api.email.service.EmailService;
 import com.ppp.api.user.exception.NotFoundUserException;
 import com.ppp.common.client.RedisClient;
 import com.ppp.common.security.jwt.JwtTokenProvider;
@@ -47,7 +48,6 @@ public class AuthService {
 
     private final EmailVerificationRepository emailVerificationRepository;
 
-    private long codeExpirationMillis = 600000;
 
     public void signup(RegisterRequest registerRequest) {
         if(userRepository.existsByEmail(registerRequest.getEmail())) {
@@ -158,25 +158,9 @@ public class AuthService {
     }
 
     @Transactional
-    public void sendEmailForm(String email) {
+    public void sendEmailCodeForm(String email) {
         checkDuplicatedEmail(email);
-
-        emailVerificationRepository.findByEmail(email)
-                .ifPresentOrElse(verification -> {
-                    LocalDateTime now = LocalDateTime.now();
-                    LocalDateTime expiredAt = verification.getExpiredAt();
-                    long minutesElapsed = Duration.between(expiredAt, now).toMinutes();
-
-                    if (minutesElapsed < 0) {
-                        throw new AuthException(ErrorCode.UNABLE_TO_SEND_EMAIL);
-                    } else {
-                        int code = emailService.sendEmailCode(email);
-                        verification.update(code ,LocalDateTime.now(), codeExpirationMillis);
-                    }
-                }, () -> {
-                    int code = emailService.sendEmailCode(email);
-                    emailVerificationRepository.save(EmailVerification.createVerification(email, code, codeExpirationMillis));
-                });
+        emailService.sendEmailCodeForm(email);
     }
 
     private void checkDuplicatedEmail(String email) {
