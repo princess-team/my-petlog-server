@@ -1,6 +1,6 @@
 package com.ppp;
 
-import com.ppp.api.auth.service.EmailService;
+import com.ppp.api.email.service.EmailService;
 import com.ppp.api.config.EmailConfig;
 import com.ppp.common.client.FfmpegClient;
 import com.ppp.common.config.FfmpegConfig;
