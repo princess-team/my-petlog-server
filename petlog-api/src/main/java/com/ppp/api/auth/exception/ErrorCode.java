@@ -18,7 +18,7 @@ public enum ErrorCode {
 
     EXISTS_EMAIL(HttpStatus.CONFLICT, "AUTH-0001", "이미 사용 중인 이메일 주소입니다."),
     NOTMATCH_PASSWORD(HttpStatus.BAD_REQUEST, "AUTH-0002", "현재 비밀번호와 다릅니다."),
-    UNABLE_TO_SEND_EMAIL(HttpStatus.BAD_REQUEST, "AUTH-0003", "10분이 지나지 않았습니다. 잠시 후 다시 시도해주세요."),
+    UNABLE_TO_SEND_EMAIL(HttpStatus.BAD_REQUEST, "AUTH-0003", "3분이 지나지 않았습니다. 잠시 후 다시 시도해주세요."),
     CODE_EXPIRATION(HttpStatus.BAD_REQUEST, "AUTH-0004", "인증번호의 유효기간이 만료되었습니다. 인증번호를 재발송해주세요."),
     SEND_EMAIL_FAILURE(HttpStatus.INTERNAL_SERVER_ERROR, "AUTH-0005", "이메일 전송에 실패하였습니다. 인증번호를 재발송해주세요."),
     VERIFICATION_CODE_NOT_MATCHED(HttpStatus.NOT_FOUND, "AUTH-0006", "인증번호가 일치하지 않습니다. 다시확인해주세요.")
