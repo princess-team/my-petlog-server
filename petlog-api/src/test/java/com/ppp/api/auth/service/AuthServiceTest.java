@@ -4,6 +4,7 @@ import com.ppp.api.auth.dto.request.RegisterRequest;
 import com.ppp.api.auth.dto.request.SigninRequest;
 import com.ppp.api.auth.dto.response.AuthenticationResponse;
 import com.ppp.api.auth.exception.AuthException;
+import com.ppp.api.email.service.EmailService;
 import com.ppp.common.client.RedisClient;
 import com.ppp.common.security.jwt.JwtTokenProvider;
 import com.ppp.domain.email.EmailVerification;
@@ -109,34 +110,20 @@ class AuthServiceTest {
 
     @Test
     @DisplayName("인증코드 전송 - 최초 전송")
-    void sendMessageTest_first() {
+    void sendMessage_first() {
         //given
         String email = "test@test.com";
 
         //when
-        when(emailVerificationRepository.findByEmail(email)).thenReturn(Optional.empty());
+        when(userRepository.existsByEmail(email)).thenReturn(false);
 
         //then
-        assertDoesNotThrow(() -> authService.sendEmailForm(email));
+        assertDoesNotThrow(() -> authService.sendEmailCodeForm(email));
     }
-
-    @Test
-    @DisplayName("인증코드 전송 - 10분내에 전송")
-    void sendMessageTest_Within10M() {
-        //given
-        String email = "test@test.com";
-        EmailVerification emailVerification = EmailVerification.createVerification(email, 12345, 600000);
-        //when
-        when(emailVerificationRepository.findByEmail(email)).thenReturn(Optional.ofNullable(emailVerification));
-
-        //then
-        assertThrows(AuthException.class, () -> authService.sendEmailForm(email), "10분이 지나지 않았습니다.");
-    }
-
 
     @Test
     @DisplayName("인증코드 검증")
-    void verificationEmailTest() {
+    void verify_Authentication_EmailCode() {
         //given
         String email = "test@test.com";
         EmailVerification emailVerification = EmailVerification.createVerification(email, 123456, 60000);
@@ -153,8 +140,8 @@ class AuthServiceTest {
     }
 
     @Test
-    @DisplayName("인증코드 검증 -  10분 초과시 예외 발생 ")
-    void verificationEmailTest_authException() {
+    @DisplayName("인증코드 검증 -  만료시간 초과시 예외 발생")
+    void verification_Email_AuthException() {
         //given
         String email = "test@test.com";
         int verificationCode = 123456;
@@ -165,6 +152,6 @@ class AuthServiceTest {
         when(emailVerificationRepository.findByEmailAndVerificationCode(email, verificationCode)).thenReturn(Optional.ofNullable(emailVerification));
 
         //then
-        assertThrows(AuthException.class, () -> authService.verifiedCode(email, verificationCode), "10분이 지났으므로 CODE_EXPIRATION 예외가 발생해야 합니다.");
+        assertThrows(AuthException.class, () -> authService.verifiedCode(email, verificationCode), "만료시간이 지났으므로 CODE_EXPIRATION 예외가 발생해야 합니다.");
     }
 }
