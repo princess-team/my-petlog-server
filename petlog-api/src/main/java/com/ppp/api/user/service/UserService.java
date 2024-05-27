@@ -39,21 +39,25 @@ public class UserService {
         return userRepository.existsByEmail(email);
     }
 
+    private User findUserByEmail(String email) {
+        return userRepository.findByEmail(email).orElseThrow(() -> new NotFoundUserException(ErrorCode.NOT_FOUND_USER));
+    }
+
     @Transactional
     public void createProfile(User user, MultipartFile profileImage, String nickname) {
-        User userFromDB = userRepository.findByEmail(user.getEmail())
-                .orElseThrow(() -> new NotFoundUserException(ErrorCode.NOT_FOUND_USER));
+        User userFromDb = findUserByEmail(user.getEmail());
+        userFromDb.setNickname(nickname);
 
-        userFromDB.setNickname(nickname);
-        saveProfileImage(userFromDB, profileImage);
+        saveProfileImage(userFromDb, profileImage);
+        saveProfileThumbnail(userFromDb);
     }
 
     private void saveProfileImage(User user, MultipartFile profileImage) {
         if (profileImage != null && !profileImage.isEmpty()) {
-            fileStorageManageService.deleteImage(user.getProfilePath());
+            if (user.getProfilePath() != null && !user.getProfilePath().isEmpty())
+                fileStorageManageService.deleteImage(user.getProfilePath());
             String savedPath = uploadImageToS3(profileImage);
             user.updateProfilePath(savedPath);
-            saveProfileThumbnail(user, savedPath);
         } else {
             if (user.getProfilePath() != null && !user.getProfilePath().isEmpty())
                 fileStorageManageService.deleteImage(user.getProfilePath());
@@ -61,16 +65,23 @@ public class UserService {
         }
     }
 
-    private void saveProfileThumbnail(User user, String savedPath) {
-        try {
-            if (user.getThumbnailPath() != null) {
-                fileStorageManageService.deleteImage(user.getThumbnailPath());
+    private void saveProfileThumbnail(User user) {
+        userRepository.findByEmail(user.getEmail()).ifPresent(
+            updatedUser -> {
+                try {
+                    if (updatedUser.getThumbnailPath() != null && !updatedUser.getThumbnailPath().isEmpty()) {
+                        fileStorageManageService.deleteImage(updatedUser.getThumbnailPath());
+                        updatedUser.deleteThumbnailPath();
+                    }
+                    if (updatedUser.getProfilePath() != null && !updatedUser.getProfilePath().isEmpty()) {
+                        String thumbnailUrl = thumbnailService.uploadThumbnailFromStorageFile(updatedUser.getProfilePath(), FileType.IMAGE, Domain.USER);
+                        updatedUser.updateThumbnailPath(thumbnailUrl);
+                    }
+                } catch (Exception e) {
+                    log.warn("{} is thumbnail error", updatedUser.getId());
+                }
             }
-            String thumbnailPath = thumbnailService.uploadThumbnailFromStorageFile(savedPath, FileType.IMAGE, Domain.USER);
-            user.updateThumbnailPath(thumbnailPath);
-        } catch (Exception e) {
-            log.warn("{} is thumbnail error", user.getId());
-        }
+        );
     }
 
     private String uploadImageToS3(MultipartFile profileImage) {
@@ -80,8 +91,7 @@ public class UserService {
 
     @Transactional
     public void updateProfile(User user, String nickname, String password) {
-        User userFromDb = userRepository.findByEmail(user.getEmail())
-                .orElseThrow(() -> new NotFoundUserException(ErrorCode.NOT_FOUND_USER));
+        User userFromDb = findUserByEmail(user.getEmail());
 
         if (nickname != null && !nickname.isEmpty())
             userFromDb.setNickname(nickname);
@@ -92,15 +102,15 @@ public class UserService {
 
     @Transactional
     public void updateImage(User user, MultipartFile profileImage) {
-        User userFromDb = userRepository.findByEmail(user.getEmail())
-                .orElseThrow(() -> new NotFoundUserException(ErrorCode.NOT_FOUND_USER));
+        User userFromDb = findUserByEmail(user.getEmail());
 
         saveProfileImage(userFromDb, profileImage);
+        saveProfileThumbnail(user);
     }
 
     public ProfileResponse displayMe(User user) {
-        User userFromDb = userRepository.findByEmail(user.getEmail())
-                .orElseThrow(() -> new NotFoundUserException(ErrorCode.NOT_FOUND_USER));
+        User userFromDb = findUserByEmail(user.getEmail());
+
         return ProfileResponse.builder()
                 .id(userFromDb.getId())
                 .nickname(userFromDb.getNickname())
