@@ -27,6 +27,8 @@ public class JwtTokenProvider {
     @Value("${application.security.jwt.refresh-token.expiration}")
     private long refreshExpiration;
 
+    public static final String TOKEN_PREFIX = "Bearer ";
+    public static final String HEADER_STRING = "Authorization";
 
     public String generateAccessToken(User user){
         Date expireDate = createExpireDate(accessExpiration);
@@ -43,7 +45,7 @@ public class JwtTokenProvider {
 
     public String generateRefreshToken(User user){
         Date expireDate = createExpireDate(refreshExpiration);
-        Key key= Keys.hmacShaKeyFor(secretRefreshKey.getBytes());
+        Key key = Keys.hmacShaKeyFor(secretRefreshKey.getBytes());
         Claims claim = Jwts.claims().setSubject(user.getEmail());
 
         return Jwts.builder()
@@ -103,9 +105,9 @@ public class JwtTokenProvider {
     }
 
     public String getJwtFromRequestHeader(HttpServletRequest request){
-        String token = request.getHeader("Authorization");
-        if(StringUtils.hasText(token) && token.startsWith("Bearer ")){
-            return token.substring("Bearer".length());
+        String token = request.getHeader(HEADER_STRING);
+        if(StringUtils.hasText(token) && token.startsWith(TOKEN_PREFIX)){
+            return token.substring(TOKEN_PREFIX.length());
         }
         else return token;
     }
@@ -116,7 +118,7 @@ public class JwtTokenProvider {
     }
 
     public boolean validateRefreshToken(String token){
-        Key key= Keys.hmacShaKeyFor(secretRefreshKey.getBytes());
+        Key key = Keys.hmacShaKeyFor(secretRefreshKey.getBytes());
         return validateToken(token, key);
     }
 
