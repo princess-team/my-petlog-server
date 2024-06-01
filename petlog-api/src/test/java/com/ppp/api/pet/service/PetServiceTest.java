@@ -15,6 +15,7 @@ import com.ppp.domain.pet.PetImage;
 import com.ppp.domain.pet.constant.Gender;
 import com.ppp.domain.pet.repository.PetImageRepository;
 import com.ppp.domain.pet.repository.PetRepository;
+import com.ppp.domain.subscription.repository.SubscriptionRepository;
 import com.ppp.domain.user.User;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -56,6 +57,9 @@ class PetServiceTest {
 
     @Mock
     private GuardianRepository guardianRepository;
+
+    @Mock
+    private SubscriptionRepository subscriptionRepository;
 
     @InjectMocks
     private PetService petService;

@@ -21,6 +21,8 @@ import com.ppp.domain.pet.Pet;
 import com.ppp.domain.pet.PetImage;
 import com.ppp.domain.pet.repository.PetImageRepository;
 import com.ppp.domain.pet.repository.PetRepository;
+import com.ppp.domain.subscription.Subscription;
+import com.ppp.domain.subscription.repository.SubscriptionRepository;
 import com.ppp.domain.user.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,6 +33,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static com.ppp.api.guardian.exception.ErrorCode.GUARDIAN_NOT_FOUND;
 
@@ -45,7 +48,7 @@ public class PetService {
     private final GuardianQuerydslRepository guardianQuerydslRepository;
     private final GuardianRepository guardianRepository;
     private final ThumbnailService thumbnailService;
-
+    private final SubscriptionRepository subscriptionRepository;
 
     @Transactional
     public void createPet(PetRequest petRequest, User user, MultipartFile petImage) {
@@ -164,12 +167,22 @@ public class PetService {
     public void deleteMyPet(Long petId, User user) {
         Guardian guardian = guardianService.findByUserIdAndPetId(user.getId(), petId);
         guardianService.deleteReaderGuardian(guardian, petId);
+        deleteSubscriptionsOfPet(petId);
+
         petRepository.findMyPetByIdAndIsDeletedFalse(petId, user.getId()).ifPresent(pet -> {
             PetImage petImage = petImageRepository.findByPet(pet).orElse(new PetImage());
             deletePetImage(petImage);
             deletePetThumbnail(petImage);
             pet.delete();
         });
+    }
+
+    private void deleteSubscriptionsOfPet(Long petId) {
+        List<Subscription> subscriptions = subscriptionRepository.findByPetId(petId);
+        if (!subscriptions.isEmpty()) {
+            List<Long> subscriptionIds = subscriptions.stream().map(subscription -> subscription.getId()).collect(Collectors.toList());
+            subscriptionRepository.deleteAllByIdInBatch(subscriptionIds);
+        }
     }
 
     public void validatePetName(String name) {
