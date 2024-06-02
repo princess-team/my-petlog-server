@@ -4,6 +4,7 @@ import com.ppp.api.diary.dto.response.DiaryGroupByDateResponse;
 import com.ppp.api.diary.dto.response.DiaryMostUsedTermsResponse;
 import com.ppp.api.diary.dto.response.DiaryResponse;
 import com.ppp.api.diary.exception.DiaryException;
+import com.ppp.api.subscription.service.SubscriptionService;
 import com.ppp.api.user.exception.ErrorCode;
 import com.ppp.api.user.exception.UserException;
 import com.ppp.domain.diary.Diary;
@@ -40,6 +41,7 @@ public class DiarySearchService {
     private final DiaryCommentRedisService diaryCommentRedisService;
     private final GuardianRepository guardianRepository;
     private final UserRepository userRepository;
+    private final SubscriptionService subscriptionService;
 
 
     public void save(Diary diary) {
@@ -62,7 +64,7 @@ public class DiarySearchService {
                 .collect(Collectors.toList()));
     }
 
-    public Page<DiaryGroupByDateResponse> search(User user, String keyword, Long petId, int page, int size) {
+    public Page<DiaryGroupByDateResponse> searchInPetSpace(User user, String keyword, Long petId, int page, int size) {
         return getGroupedDiariesPage(diarySearchRepository.
                 findByTitleContainsOrContentContainsAndPetIdOrderByDateDesc(keyword, petId, getUsersDiaryViewingRange(user, petId),
                         PageRequest.of(page, size, Sort.by(Sort.Order.desc("date")))), user.getId());
@@ -70,6 +72,13 @@ public class DiarySearchService {
 
     private Set<Boolean> getUsersDiaryViewingRange(User user, Long petId) {
         return new HashSet<>(List.of(true, !guardianRepository.existsByUserIdAndPetId(user.getId(), petId)));
+    }
+
+    public Page<DiaryGroupByDateResponse> searchInFeed(User user, String keyword, int page, int size) {
+        Set<Long> subscribedPetsId = subscriptionService.getUsersSubscriptionInfo(user.getId()).subscribedPetIds();
+        return getGroupedDiariesPage(diarySearchRepository
+                .findByTitleContainsOrContentContainsAndSubscribedPetsIdOrderByDateDesc(keyword, subscribedPetsId,
+                        PageRequest.of(page, size, Sort.by(Sort.Order.desc("date")))), user.getId());
     }
 
     private Page<DiaryGroupByDateResponse> getGroupedDiariesPage(Page<DiaryDocument> documentPage, String userId) {
