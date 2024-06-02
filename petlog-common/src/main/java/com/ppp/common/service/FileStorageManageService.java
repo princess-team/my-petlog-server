@@ -22,7 +22,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class FileStorageManageService {
     private final FileStorageClient fileStorageClient;
-    public static final List<String> ALLOW_IMAGE_CODES = List.of(".jpeg", ".png", ".jpg", ".gif");
+    public static final List<String> ALLOW_IMAGE_CODES = List.of(".jpeg", ".png", ".jpg", ".gif", ".svg");
     public static final List<String> ALLOW_VIDEO_CODES = List.of(".mp4");
 
     public Optional<String> uploadImage(MultipartFile multipartFile, Domain domain) {
