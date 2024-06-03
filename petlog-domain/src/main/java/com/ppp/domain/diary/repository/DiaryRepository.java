@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -24,4 +25,6 @@ public interface DiaryRepository extends JpaRepository<Diary, Long> {
     boolean existsByIdAndIsDeletedFalse(Long id);
 
     Optional<Diary> findByIdAndPetIdAndIsDeletedFalse(Long id, Long petId);
+
+    List<Diary> findByPetIdAndIsDeletedFalse(Long petId);
 }

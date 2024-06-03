@@ -4,7 +4,6 @@ import com.ppp.api.diary.dto.response.DiaryGroupByDateResponse;
 import com.ppp.api.diary.dto.response.DiaryMostUsedTermsResponse;
 import com.ppp.api.diary.dto.response.DiaryResponse;
 import com.ppp.api.diary.exception.DiaryException;
-import com.ppp.api.subscription.service.SubscriptionService;
 import com.ppp.api.user.exception.ErrorCode;
 import com.ppp.api.user.exception.UserException;
 import com.ppp.domain.diary.Diary;
@@ -41,7 +40,6 @@ public class DiarySearchService {
     private final DiaryCommentRedisService diaryCommentRedisService;
     private final GuardianRepository guardianRepository;
     private final UserRepository userRepository;
-    private final SubscriptionService subscriptionService;
 
 
     public void save(Diary diary) {
@@ -54,6 +52,10 @@ public class DiarySearchService {
 
     public void delete(Long diaryId) {
         diarySearchRepository.deleteById(diaryId + "");
+    }
+
+    public void deleteAllByPetId(Long petId) {
+        diarySearchRepository.deleteAllByPetId(petId);
     }
 
     public void updateUser(String userId) {
@@ -75,9 +77,8 @@ public class DiarySearchService {
     }
 
     public Page<DiaryGroupByDateResponse> searchInFeed(User user, String keyword, int page, int size) {
-        Set<Long> subscribedPetsId = subscriptionService.getUsersSubscriptionInfo(user.getId()).subscribedPetIds();
         return getGroupedDiariesPage(diarySearchRepository
-                .findByTitleContainsOrContentContainsAndSubscribedPetsIdOrderByDateDesc(keyword, subscribedPetsId,
+                .findByTitleContainsOrContentContainsOrderByDateDesc(keyword,
                         PageRequest.of(page, size, Sort.by(Sort.Order.desc("date")))), user.getId());
     }
 
