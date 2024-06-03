@@ -236,16 +236,16 @@ public class DiaryService {
         }
     }
 
+    @Transactional
     public void deleteAllByPetId(Long petId) {
         List<String> deletedPaths = new ArrayList<>();
-        List<Diary> diariesToBeDeleted = diaryRepository.findByPetIdAndIsDeletedFalse(petId)
-                .stream().peek(diary -> {
+        diaryRepository.findByPetIdAndIsDeletedFalse(petId)
+                .forEach(diary -> {
                     diary.delete();
                     deletedPaths.addAll(diary.getDiaryMedias().stream().map(DiaryMedia::getPath).toList());
                     if (diary.getThumbnailPath() != null && !Objects.equals(diary.getThumbnailPath(), DEFAULT_THUMBNAIL_PATH))
                         deletedPaths.add(diary.getThumbnailPath());
-                }).toList();
+                });
         fileStorageManageService.deleteImages(deletedPaths);
-        diaryRepository.saveAll(diariesToBeDeleted);
     }
 }
