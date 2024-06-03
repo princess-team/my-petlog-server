@@ -145,7 +145,7 @@ class DiarySearchServiceTest {
                                         .petId(1L).build())
                 ));
         //when
-        Page<DiaryGroupByDateResponse> response = diarySearchService.search(user, "우리집", 1L, 1, 10);
+        Page<DiaryGroupByDateResponse> response = diarySearchService.searchInPetSpace(user, "우리집", 1L, 1, 10);
         //then
         assertEquals(response.getContent().size(), 2);
         assertEquals(response.getContent().get(0).date(), LocalDate.MAX);

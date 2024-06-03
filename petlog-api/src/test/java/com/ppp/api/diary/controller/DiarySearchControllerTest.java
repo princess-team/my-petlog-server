@@ -67,4 +67,21 @@ class DiarySearchControllerTest {
                 .andExpect(status().isOk());
         //then
     }
+
+    @Test
+    @WithMockCustomUser
+    @DisplayName("일기 리스트 조회 성공")
+    void searchInFeed_success() throws Exception {
+        //given
+        //when
+        mockMvc.perform(get("/api/v1/pets/diaries/search")
+                        .param("keyword", "강아지")
+                        .param("page", "1")
+                        .param("size", "10")
+                        .header("Authorization", TOKEN)
+                        .contentType(MediaType.APPLICATION_JSON_VALUE)
+                ).andDo(print())
+                .andExpect(status().isOk());
+        //then
+    }
 }
