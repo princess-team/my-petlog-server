@@ -8,6 +8,7 @@ import com.ppp.api.pet.dto.response.MyPetResponse;
 import com.ppp.api.pet.dto.response.MyPetsResponse;
 import com.ppp.api.pet.exception.ErrorCode;
 import com.ppp.api.pet.exception.PetException;
+import com.ppp.common.service.CacheManageService;
 import com.ppp.common.service.FileStorageManageService;
 import com.ppp.common.service.ThumbnailService;
 import com.ppp.domain.common.constant.Domain;
@@ -51,6 +52,7 @@ public class PetService {
     private final GuardianRepository guardianRepository;
     private final ThumbnailService thumbnailService;
     private final SubscriptionRepository subscriptionRepository;
+    private final CacheManageService cacheManageService;
     private final ApplicationEventPublisher applicationEventPublisher;
 
     @Transactional
@@ -184,8 +186,8 @@ public class PetService {
     private void deleteSubscriptionsOfPet(Long petId) {
         List<Subscription> subscriptions = subscriptionRepository.findByPetId(petId);
         if (!subscriptions.isEmpty()) {
-            List<Long> subscriptionIds = subscriptions.stream().map(subscription -> subscription.getId()).collect(Collectors.toList());
-            subscriptionRepository.deleteAllByIdInBatch(subscriptionIds);
+            subscriptions.forEach(s -> cacheManageService.deleteCachedSubscriptionInfo(s.getSubscriber().getId()));
+            subscriptionRepository.deleteAllInBatch(subscriptions);
         }
     }
 
