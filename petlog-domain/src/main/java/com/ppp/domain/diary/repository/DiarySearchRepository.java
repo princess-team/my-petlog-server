@@ -16,4 +16,9 @@ public interface DiarySearchRepository extends ElasticsearchRepository<DiaryDocu
     Page<DiaryDocument> findByTitleContainsOrContentContainsAndPetIdOrderByDateDesc(String keyword, Long petId, Set<Boolean> isPublicFilter, PageRequest request);
 
     List<DiaryDocument> findByUser_Id(String userId);
+
+    @Query("{\"bool\" : { \"must\" : [ { \"bool\" : { \"should\" : [ {\"wildcard\" : { \"title\" : { \"value\" : \"*?0*\"}}}, {\"match_phrase\" : { \"content\" : { \"query\" : \"?0\", \"slop\" : 1}}}] } } ], \"filter\": [ {\"term\": {\"isPublic\": true}} ] }}")
+    Page<DiaryDocument> findByTitleContainsOrContentContainsOrderByDateDesc(String keyword, PageRequest request);
+
+    void deleteAllByPetId(Long petId);
 }

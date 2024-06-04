@@ -25,6 +25,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 
@@ -48,6 +49,8 @@ class PetServiceTest {
 
     @Mock
     private FileStorageManageService fileStorageManageService;
+    @Mock
+    private ApplicationEventPublisher applicationEventPublisher;
 
     @Mock
     private GuardianQuerydslRepository guardianQuerydslRepository;

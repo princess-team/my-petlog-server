@@ -2,6 +2,7 @@ package com.ppp.api.pet.service;
 
 import com.ppp.api.guardian.exception.GuardianException;
 import com.ppp.api.guardian.service.GuardianService;
+import com.ppp.api.pet.dto.event.PetDeletedEvent;
 import com.ppp.api.pet.dto.request.PetRequest;
 import com.ppp.api.pet.dto.response.MyPetResponse;
 import com.ppp.api.pet.dto.response.MyPetsResponse;
@@ -27,6 +28,7 @@ import com.ppp.domain.subscription.repository.SubscriptionRepository;
 import com.ppp.domain.user.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -51,6 +53,7 @@ public class PetService {
     private final ThumbnailService thumbnailService;
     private final SubscriptionRepository subscriptionRepository;
     private final CacheManageService cacheManageService;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     @Transactional
     public void createPet(PetRequest petRequest, User user, MultipartFile petImage) {
@@ -177,6 +180,7 @@ public class PetService {
             deletePetThumbnail(petImage);
             pet.delete();
         });
+        applicationEventPublisher.publishEvent(new PetDeletedEvent(petId));
     }
 
     private void deleteSubscriptionsOfPet(Long petId) {
