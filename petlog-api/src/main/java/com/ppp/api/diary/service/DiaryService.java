@@ -44,6 +44,7 @@ import java.util.stream.Collectors;
 import static com.ppp.api.diary.exception.ErrorCode.*;
 import static com.ppp.api.pet.exception.ErrorCode.PET_NOT_FOUND;
 import static com.ppp.domain.common.constant.Domain.DIARY;
+import static com.ppp.domain.diary.constant.DiaryPolicy.DEFAULT_THUMBNAIL_PATH;
 
 @RequiredArgsConstructor
 @Service
@@ -233,5 +234,18 @@ public class DiaryService {
         } catch (Exception e) {
             return DiaryPolicy.DEFAULT_THUMBNAIL_PATH;
         }
+    }
+
+    @Transactional
+    public void deleteAllByPetId(Long petId) {
+        List<String> deletedPaths = new ArrayList<>();
+        diaryRepository.findByPetIdAndIsDeletedFalse(petId)
+                .forEach(diary -> {
+                    diary.delete();
+                    deletedPaths.addAll(diary.getDiaryMedias().stream().map(DiaryMedia::getPath).toList());
+                    if (diary.getThumbnailPath() != null && !Objects.equals(diary.getThumbnailPath(), DEFAULT_THUMBNAIL_PATH))
+                        deletedPaths.add(diary.getThumbnailPath());
+                });
+        fileStorageManageService.deleteImages(deletedPaths);
     }
 }

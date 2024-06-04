@@ -54,6 +54,10 @@ public class DiarySearchService {
         diarySearchRepository.deleteById(diaryId + "");
     }
 
+    public void deleteAllByPetId(Long petId) {
+        diarySearchRepository.deleteAllByPetId(petId);
+    }
+
     public void updateUser(String userId) {
         User user = userRepository.findByIdAndIsDeletedFalse(userId)
                 .orElseThrow(() -> new UserException(ErrorCode.NOT_FOUND_USER));
@@ -62,7 +66,7 @@ public class DiarySearchService {
                 .collect(Collectors.toList()));
     }
 
-    public Page<DiaryGroupByDateResponse> search(User user, String keyword, Long petId, int page, int size) {
+    public Page<DiaryGroupByDateResponse> searchInPetSpace(User user, String keyword, Long petId, int page, int size) {
         return getGroupedDiariesPage(diarySearchRepository.
                 findByTitleContainsOrContentContainsAndPetIdOrderByDateDesc(keyword, petId, getUsersDiaryViewingRange(user, petId),
                         PageRequest.of(page, size, Sort.by(Sort.Order.desc("date")))), user.getId());
@@ -70,6 +74,12 @@ public class DiarySearchService {
 
     private Set<Boolean> getUsersDiaryViewingRange(User user, Long petId) {
         return new HashSet<>(List.of(true, !guardianRepository.existsByUserIdAndPetId(user.getId(), petId)));
+    }
+
+    public Page<DiaryGroupByDateResponse> searchInFeed(User user, String keyword, int page, int size) {
+        return getGroupedDiariesPage(diarySearchRepository
+                .findByTitleContainsOrContentContainsOrderByDateDesc(keyword,
+                        PageRequest.of(page, size, Sort.by(Sort.Order.desc("date")))), user.getId());
     }
 
     private Page<DiaryGroupByDateResponse> getGroupedDiariesPage(Page<DiaryDocument> documentPage, String userId) {
