@@ -94,7 +94,8 @@ public class GuardianService {
         return GuardianRole.LEADER.equals(guardian.getGuardianRole());
     }
 
-    public void deleteReaderGuardian(Guardian guardian, Long petId) {
+    public void deleteReaderGuardian(String userId, Long petId) {
+        Guardian guardian = findByUserIdAndPetId(userId, petId);
         if (guardianRepository.existsByPetIdAndGuardianRole(petId, GuardianRole.MEMBER)) {
             throw new GuardianException(ErrorCode.NOT_ALLOWED_DELETE_LEADER);
         }

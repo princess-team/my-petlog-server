@@ -8,13 +8,12 @@ import com.ppp.api.pet.dto.response.MyPetResponse;
 import com.ppp.api.pet.dto.response.MyPetsResponse;
 import com.ppp.api.pet.exception.ErrorCode;
 import com.ppp.api.pet.exception.PetException;
-import com.ppp.common.service.CacheManageService;
+import com.ppp.api.subscription.service.SubscriptionService;
 import com.ppp.common.service.FileStorageManageService;
 import com.ppp.common.service.ThumbnailService;
 import com.ppp.domain.common.constant.Domain;
 import com.ppp.domain.common.constant.FileType;
 import com.ppp.domain.common.util.GenerationUtil;
-import com.ppp.domain.guardian.Guardian;
 import com.ppp.domain.guardian.constant.GuardianRole;
 import com.ppp.domain.guardian.dto.MyPetDto;
 import com.ppp.domain.guardian.repository.GuardianQuerydslRepository;
@@ -23,8 +22,6 @@ import com.ppp.domain.pet.Pet;
 import com.ppp.domain.pet.PetImage;
 import com.ppp.domain.pet.repository.PetImageRepository;
 import com.ppp.domain.pet.repository.PetRepository;
-import com.ppp.domain.subscription.Subscription;
-import com.ppp.domain.subscription.repository.SubscriptionRepository;
 import com.ppp.domain.user.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,7 +33,6 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import static com.ppp.api.guardian.exception.ErrorCode.GUARDIAN_NOT_FOUND;
 
@@ -51,8 +47,7 @@ public class PetService {
     private final GuardianQuerydslRepository guardianQuerydslRepository;
     private final GuardianRepository guardianRepository;
     private final ThumbnailService thumbnailService;
-    private final SubscriptionRepository subscriptionRepository;
-    private final CacheManageService cacheManageService;
+    private final SubscriptionService subscriptionService;
     private final ApplicationEventPublisher applicationEventPublisher;
 
     @Transactional
@@ -170,9 +165,8 @@ public class PetService {
 
     @Transactional
     public void deleteMyPet(Long petId, User user) {
-        Guardian guardian = guardianService.findByUserIdAndPetId(user.getId(), petId);
-        guardianService.deleteReaderGuardian(guardian, petId);
-        deleteSubscriptionsOfPet(petId);
+        guardianService.deleteReaderGuardian(user.getId(), petId);
+        subscriptionService.deleteSubscriptionsOfPet(petId);
 
         petRepository.findMyPetByIdAndIsDeletedFalse(petId, user.getId()).ifPresent(pet -> {
             PetImage petImage = petImageRepository.findByPet(pet).orElse(new PetImage());
@@ -181,14 +175,6 @@ public class PetService {
             pet.delete();
         });
         applicationEventPublisher.publishEvent(new PetDeletedEvent(petId));
-    }
-
-    private void deleteSubscriptionsOfPet(Long petId) {
-        List<Subscription> subscriptions = subscriptionRepository.findByPetId(petId);
-        if (!subscriptions.isEmpty()) {
-            subscriptions.forEach(s -> cacheManageService.deleteCachedSubscriptionInfo(s.getSubscriber().getId()));
-            subscriptionRepository.deleteAllInBatch(subscriptions);
-        }
     }
 
     public void validatePetName(String name) {
