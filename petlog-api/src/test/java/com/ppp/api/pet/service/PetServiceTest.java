@@ -5,6 +5,7 @@ import com.ppp.api.pet.dto.request.PetRequest;
 import com.ppp.api.pet.dto.response.MyPetResponse;
 import com.ppp.api.pet.dto.response.MyPetsResponse;
 import com.ppp.api.pet.exception.PetException;
+import com.ppp.api.subscription.service.SubscriptionService;
 import com.ppp.common.service.FileStorageManageService;
 import com.ppp.domain.guardian.constant.RepStatus;
 import com.ppp.domain.guardian.dto.MyPetDto;
@@ -15,7 +16,6 @@ import com.ppp.domain.pet.PetImage;
 import com.ppp.domain.pet.constant.Gender;
 import com.ppp.domain.pet.repository.PetImageRepository;
 import com.ppp.domain.pet.repository.PetRepository;
-import com.ppp.domain.subscription.repository.SubscriptionRepository;
 import com.ppp.domain.user.User;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -62,7 +62,7 @@ class PetServiceTest {
     private GuardianRepository guardianRepository;
 
     @Mock
-    private SubscriptionRepository subscriptionRepository;
+    private SubscriptionService subscriptionService;
 
     @InjectMocks
     private PetService petService;

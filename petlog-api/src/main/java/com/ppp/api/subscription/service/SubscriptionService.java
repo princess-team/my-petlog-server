@@ -96,4 +96,12 @@ public class SubscriptionService {
     private void deleteCachedSubscriptionInfo(String userId) {
         cacheManageService.deleteCachedSubscriptionInfo(userId);
     }
+
+    public void deleteSubscriptionsOfPet(Long petId) {
+        List<Subscription> subscriptions = subscriptionRepository.findByPetId(petId);
+        if (!subscriptions.isEmpty()) {
+            subscriptions.forEach(s -> cacheManageService.deleteCachedSubscriptionInfo(s.getSubscriber().getId()));
+            subscriptionRepository.deleteAllInBatch(subscriptions);
+        }
+    }
 }
