@@ -117,4 +117,16 @@ public class DiaryController {
                                                                            @AuthenticationPrincipal PrincipalDetails principalDetails) {
         return ResponseEntity.ok(diaryService.displayDiaries(principalDetails.getUser(), petId, page, size));
     }
+
+    @Operation(summary = "피드 검색 전용 일기 상세 조회")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", content = {@Content(schema = @Schema(implementation = DiaryDetailResponse.class))}),
+            @ApiResponse(responseCode = "403", description = "기록 공간에 대한 권한 없음", content = {@Content(schema = @Schema(implementation = ExceptionResponse.class))}),
+            @ApiResponse(responseCode = "404", description = "일치하는 일기 없음", content = {@Content(schema = @Schema(implementation = ExceptionResponse.class))})
+    })
+    @GetMapping(value = "/{diaryId}/feed")
+    private ResponseEntity<DiaryDetailResponse> displayFeedDiary(@PathVariable Long diaryId,
+                                                                 @AuthenticationPrincipal PrincipalDetails principalDetails) {
+        return ResponseEntity.ok(diaryService.displayFeedDiary(principalDetails.getUser(), diaryId));
+    }
 }
