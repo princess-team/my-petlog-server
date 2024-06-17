@@ -979,5 +979,28 @@ class DiaryServiceTest {
         assertEquals(DIARY_NOT_FOUND.getCode(), exception.getCode());
     }
 
+    @Test
+    @DisplayName("피드 일기 상세 조회 성공")
+    void displayFeedDiary_success() {
+        //given
+        Diary diary = Diary.builder()
+        .title("우리집 고양이")
+        .isPublic(false)
+        .content("츄르를 좋아해")
+        .date(LocalDate.of(2020, 11, 11))
+        .user(user)
+        .pet(pet).build();
 
+        given(diaryRepository.findByIdAndIsDeletedFalse(anyLong())).willReturn(Optional.ofNullable(diary));
+
+        //when
+        DiaryDetailResponse response = diaryService.displayFeedDiary(user, 1L);
+
+        //then
+        assertEquals(response.title(), diary.getTitle());
+        assertEquals(response.content(), diary.getContent());
+        assertEquals(response.writer().profilePath(), user.getProfilePath());
+        assertEquals(response.writer().nickname(), user.getNickname());
+        assertFalse(response.isCurrentUserLiked());
+    }
 }

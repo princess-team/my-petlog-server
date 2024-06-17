@@ -248,4 +248,13 @@ public class DiaryService {
                 });
         fileStorageManageService.deleteImages(deletedPaths);
     }
+
+    public DiaryDetailResponse displayFeedDiary(User user, Long diaryId) {
+        Diary diary = diaryRepository.findByIdAndIsDeletedFalse(diaryId)
+            .orElseThrow(() -> new DiaryException(DIARY_NOT_FOUND));
+        return DiaryDetailResponse.from(diary, user.getId(),
+                diaryCommentRedisService.getDiaryCommentCountByDiaryId(diaryId),
+                diaryRedisService.isLikeExistByDiaryIdAndUserId(diaryId, user.getId()),
+                diaryRedisService.getLikeCountByDiaryId(diaryId));
+    }
 }

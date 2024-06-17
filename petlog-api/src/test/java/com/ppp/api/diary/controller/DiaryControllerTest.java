@@ -19,7 +19,6 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -214,4 +213,17 @@ class DiaryControllerTest {
         //then
     }
 
+    @Test
+    @WithMockCustomUser
+    @DisplayName("일기 상세 조회 성공")
+    void displayFeedDiary_success() throws Exception {
+        //given
+        //when
+        mockMvc.perform(get("/api/v1/pets/{petId}/diaries/{diaryId}/feed", 1L, 1L)
+                        .header("Authorization", TOKEN)
+                        .contentType(MediaType.APPLICATION_JSON_VALUE)
+                ).andDo(print())
+                .andExpect(status().isOk());
+        //then
+    }
 }
