@@ -32,7 +32,7 @@
 - Spring Boot 3.1.8
 
 ### Project Architecture
-<img src="https://github.com/user-attachments/assets/8ecc95d1-3e14-45f1-978d-d30d5d603c6b" width="300" height="300">
+<img src="https://github.com/user-attachments/assets/8db54566-ae30-404d-aca7-9d7ef8f49529" width="300" height="300">
 
 - develop 브랜치의 코드가 git action 에 의해 개발 서버에 지속적 통합됩니다.
 
@@ -46,7 +46,6 @@
  ┃ ┃    ┗ 📂resources
  ┃ ┃       ┣ 📜application-dev.yml
  ┃ ┃       ┗ 📜application-local.yml
- ┃ ┣ 📜Dockerfile
  ┃ ┗ 📜build.gradle.kts
  ┃ ┗ 📂test
  ┣ 📂 petlog-api
@@ -55,7 +54,6 @@
  ┃ ┃    ┗ 📂resources
  ┃ ┃       ┣ 📜application-dev.yml
  ┃ ┃       ┗ 📜application-local.yml
- ┃ ┣ 📜Dockerfile
  ┃ ┗ 📜build.gradle.kts
  ┃ ┗ 📂test
  ┣ 📂 petlog-common
