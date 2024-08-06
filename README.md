@@ -32,7 +32,7 @@
 - Spring Boot 3.1.8
 
 ### Project Architecture
-<img src="https://github.com/user-attachments/assets/8db54566-ae30-404d-aca7-9d7ef8f49529" width="300" height="300">
+<img src="https://github.com/user-attachments/assets/539426c7-3817-4ae4-95fd-9f9e1004eea1" width="300" height="300">
 
 - develop 브랜치의 코드가 git action 에 의해 개발 서버에 지속적 통합됩니다.
 
@@ -40,14 +40,6 @@
 
 ```
  📂 petlog-server
- ┣ 📂 petlog-api
- ┃ ┣ 📂src
- ┃ ┃  ┗ 📂main
- ┃ ┃    ┗ 📂resources
- ┃ ┃       ┣ 📜application-dev.yml
- ┃ ┃       ┗ 📜application-local.yml
- ┃ ┗ 📜build.gradle.kts
- ┃ ┗ 📂test
  ┣ 📂 petlog-api
  ┃ ┣ 📂src
  ┃ ┃  ┗ 📂main
@@ -67,11 +59,10 @@
 ```
 
 </br>
-펫로그 프로젝트는 두 개의 서버 모듈과 두 개의 라이브러리 모듈로 구성됩니다.
+펫로그 프로젝트는 한 개의 서버 모듈과 두 개의 라이브러리 모듈로 구성됩니다.
 </br> </br>
 
 - `📂petlog-api` : 서버 모듈로, 서비스의 모든 RESTFul 관련 엔드포인트 및 로직을 포함합니다.
-- `📂petlog-chat` : 서버 모듈로, 실시간 통신에 필요한 웹소켓 관련 엔드포인트 및 로직을 포함합니다.
 - `📂petlog-domain` : 라이브러리 모듈로, 프로젝트 전반에 사용되는 Entity 와 Repository 를 포함합니다.
 - `📂petlog-common` : 라이브러리 모듈로, 여러 모듈에서 공통으로 활용하는 기능에 대한 로직을 포함합니다.
 - `📂**/📜application-dev.yml` : 개발 환경에 반영될 환경변수를 세팅합니다.
